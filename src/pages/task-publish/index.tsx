@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Input, Textarea, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
@@ -22,7 +22,7 @@ const ASSIGN_OPTIONS: { value: TaskAssignType; label: string; desc: string }[] =
 ];
 
 const TaskPublishPage: React.FC = () => {
-  const { tasks, setTasks, currentVolunteer } = useAppContext();
+  const { tasks, setTasks, currentVolunteer, pendingVolunteers } = useAppContext();
 
   const [title, setTitle] = useState('');
   const [residentName, setResidentName] = useState('');
@@ -41,7 +41,19 @@ const TaskPublishPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastPublishedTaskId, setLastPublishedTaskId] = useState<string>('');
 
-  const volunteers: Volunteer[] = mockAllVolunteers.filter(v => v.status === 'approved');
+  const volunteers: Volunteer[] = useMemo(() => {
+    const allApproved = new Map<string, Volunteer>();
+    
+    mockAllVolunteers
+      .filter(v => v.status === 'approved' && v.role === 'volunteer')
+      .forEach(v => allApproved.set(v.id, v));
+    
+    pendingVolunteers
+      .filter(v => v.status === 'approved' && v.role === 'volunteer')
+      .forEach(v => allApproved.set(v.id, v));
+    
+    return Array.from(allApproved.values());
+  }, [pendingVolunteers]);
 
   const volunteerNames = volunteers.map(v => `${v.name} · ${v.area}`);
   const selectedVolunteerIndex = volunteers.findIndex(v => v.id === assignedVolunteerId);

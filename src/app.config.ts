@@ -10,7 +10,8 @@ export default defineAppConfig({
     'pages/task-publish/index',
     'pages/volunteer-review/index',
     'pages/statistics/index',
-    'pages/abnormal-handle/index'
+    'pages/abnormal-handle/index',
+    'pages/task-tracking/index'
   ],
   window: {
     backgroundTextStyle: 'light',

@@ -43,7 +43,22 @@ const SchedulePage: React.FC = () => {
   });
 
   const myTasks = useMemo(() => {
-    return tasks.filter((t) => t.volunteerId === currentVolunteer.id || t.volunteerName === currentVolunteer.name);
+    return tasks.filter((t) => {
+      if (t.volunteerId === currentVolunteer.id || t.volunteerName === currentVolunteer.name) {
+        return true;
+      }
+      const wasMine = t.flowRecords?.some(r =>
+        r.newVolunteerId === currentVolunteer.id ||
+        r.newVolunteerName === currentVolunteer.name ||
+        r.previousVolunteerId === currentVolunteer.id ||
+        r.previousVolunteerName === currentVolunteer.name
+      );
+      const wasCancelled = t.flowRecords?.some(r =>
+        r.action === 'cancelled' &&
+        (r.operatorId === currentVolunteer.id || r.operatorName === currentVolunteer.name)
+      );
+      return wasMine && (t.status === 'cancelled' || wasCancelled);
+    });
   }, [tasks, currentVolunteer, refreshKey]);
 
   const markedDates = useMemo(() => {

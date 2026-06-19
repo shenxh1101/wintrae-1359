@@ -1,24 +1,56 @@
-import React, { useState } from 'react';
-import { View, Text, Image, Textarea } from '@tarojs/components';
+import React, { useState, useMemo } from 'react';
+import { View, Text, Image, Textarea, Picker } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import StatusTag from '@/components/StatusTag';
 import { useAppContext } from '@/store/AppContext';
 import { formatDate, getTaskFlowActionText, getTaskFlowActionIcon, generateFlowRecord, formatDateTime } from '@/utils';
-import type { Task, TaskFlowRecord } from '@/types';
+import { mockAllVolunteers } from '@/data/volunteers';
+import type { Task, TaskFlowRecord, Volunteer } from '@/types';
 
 const TaskDetailPage: React.FC = () => {
   const router = useRouter();
   const taskId = router.params.id;
-  const { tasks, setTasks, currentVolunteer } = useAppContext();
+  const { tasks, setTasks, currentVolunteer, pendingVolunteers } = useAppContext();
   const [task, setTask] = useState<Task | undefined>(tasks.find(t => t.id === taskId));
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [reassignVolunteerId, setReassignVolunteerId] = useState<string>('');
+  const [reassignReason, setReassignReason] = useState('');
 
   useDidShow(() => {
     const fresh = tasks.find(t => t.id === taskId);
     setTask(fresh);
+    
+    const action = router.params.action;
+    if (action === 'note' && currentVolunteer.role === 'admin') {
+      setTimeout(() => setShowNoteInput(true), 200);
+    }
+    if (action === 'reassign' && currentVolunteer.role === 'admin') {
+      setTimeout(() => {
+        setReassignVolunteerId('');
+        setReassignReason('');
+        setShowReassignModal(true);
+      }, 200);
+    }
   });
+
+  const availableVolunteers = useMemo<Volunteer[]>(() => {
+    const allApproved = new Map<string, Volunteer>();
+    mockAllVolunteers
+      .filter(v => v.status === 'approved' && v.role === 'volunteer')
+      .forEach(v => allApproved.set(v.id, v));
+    pendingVolunteers
+      .filter(v => v.status === 'approved' && v.role === 'volunteer')
+      .forEach(v => allApproved.set(v.id, v));
+    if (task?.volunteerId) {
+      allApproved.delete(task.volunteerId);
+    }
+    return Array.from(allApproved.values());
+  }, [pendingVolunteers, task?.volunteerId]);
+
+  const volunteerNames = availableVolunteers.map(v => `${v.name} · ${v.area}`);
 
   if (!task) {
     return (
@@ -196,6 +228,48 @@ const TaskDetailPage: React.FC = () => {
     Taro.showToast({ title: '备注已添加', icon: 'success' });
   };
 
+  const handleOpenReassign = () => {
+    setReassignVolunteerId('');
+    setReassignReason('');
+    setShowReassignModal(true);
+  };
+
+  const handleReassign = () => {
+    if (!reassignVolunteerId) {
+      Taro.showToast({ title: '请选择新志愿者', icon: 'none' });
+      return;
+    }
+    const newVolunteer = availableVolunteers.find(v => v.id === reassignVolunteerId);
+    if (!newVolunteer) return;
+
+    const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+    
+    const flowRemark = reassignReason.trim() || '管理员改派任务';
+    const reassignRecord = generateFlowRecord(task.id, 'assigned', operator, {
+      remark: flowRemark,
+      previousVolunteerId: task.volunteerId,
+      previousVolunteerName: task.volunteerName,
+      newVolunteerId: newVolunteer.id,
+      newVolunteerName: newVolunteer.name,
+    });
+
+    const updated = tasks.map(t =>
+      t.id === task.id
+        ? {
+            ...t,
+            volunteerId: newVolunteer.id,
+            volunteerName: newVolunteer.name,
+            status: newVolunteer ? 'assigned' : t.status,
+            flowRecords: [...t.flowRecords, reassignRecord],
+          }
+        : t
+    );
+    setTasks(updated);
+    setTask(updated.find(t => t.id === task.id));
+    setShowReassignModal(false);
+    Taro.showToast({ title: '改派成功', icon: 'success' });
+  };
+
   return (
     <View>
       <View className={styles.pageContainer}>
@@ -359,7 +433,12 @@ const TaskDetailPage: React.FC = () => {
       </View>
 
       <View className={styles.bottomBar}>
-        {(task.status === 'pending') && (
+        {(task.status === 'pending') && currentVolunteer.role === 'admin' && (
+          <View className={`${styles.bottomBtn} ${styles.adminBtn}`} onClick={handleOpenReassign}>
+            <Text className={styles.adminBtnText}>👥 指派志愿者</Text>
+          </View>
+        )}
+        {(task.status === 'pending') && currentVolunteer.role !== 'admin' && (
           <>
             <View className={`${styles.bottomBtn} ${styles.secondaryBtn}`} onClick={handleNavigate}>
               <Text className={styles.secondaryBtnText}>🧭 查看路线</Text>
@@ -369,7 +448,7 @@ const TaskDetailPage: React.FC = () => {
             </View>
           </>
         )}
-        {isMyTask && (task.status === 'assigned') && (
+        {isMyTask && (task.status === 'assigned') && currentVolunteer.role !== 'admin' && (
           <>
             <View className={`${styles.bottomBtn} ${styles.secondaryBtn}`} onClick={handleCancel}>
               <Text className={styles.secondaryBtnText}>取消任务</Text>
@@ -382,7 +461,17 @@ const TaskDetailPage: React.FC = () => {
             </View>
           </>
         )}
-        {isMyTask && (task.status === 'in_progress') && (
+        {(task.status === 'assigned' || task.status === 'in_progress') && currentVolunteer.role === 'admin' && (
+          <>
+            <View className={`${styles.bottomBtn} ${styles.secondaryBtn}`} onClick={handleNavigate}>
+              <Text className={styles.secondaryBtnText}>🧭 查看路线</Text>
+            </View>
+            <View className={`${styles.bottomBtn} ${styles.adminBtn}`} onClick={handleOpenReassign}>
+              <Text className={styles.adminBtnText}>🔄 改派志愿者</Text>
+            </View>
+          </>
+        )}
+        {isMyTask && (task.status === 'in_progress') && currentVolunteer.role !== 'admin' && (
           <>
             <View className={`${styles.bottomBtn} ${styles.secondaryBtn}`} onClick={handleNavigate}>
               <Text className={styles.secondaryBtnText}>🧭 导航</Text>
@@ -392,7 +481,7 @@ const TaskDetailPage: React.FC = () => {
             </View>
           </>
         )}
-        {!isMyTask && task.status !== 'pending' && task.status !== 'completed' && (
+        {!isMyTask && task.status !== 'pending' && task.status !== 'completed' && task.status !== 'assigned' && task.status !== 'in_progress' && (
           <View className={`${styles.bottomBtn} ${styles.primaryBtn}`} onClick={handleNavigate}>
             <Text className={styles.primaryBtnText}>🧭 查看路线</Text>
           </View>
@@ -403,6 +492,78 @@ const TaskDetailPage: React.FC = () => {
           </View>
         )}
       </View>
+
+      {showReassignModal && (
+        <View className={styles.modalMask}>
+          <View className={styles.reassignModal}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>
+                {task.status === 'pending' ? '指派志愿者' : '改派志愿者'}
+              </Text>
+              <View className={styles.modalClose} onClick={() => setShowReassignModal(false)}>
+                <Text className={styles.modalCloseText}>×</Text>
+              </View>
+            </View>
+
+            <View className={styles.modalBody}>
+              {task.volunteerName && (
+                <View className={styles.reassignInfoBox}>
+                  <Text className={styles.reassignInfoLabel}>当前志愿者</Text>
+                  <Text className={styles.reassignInfoValue}>
+                    {task.volunteerName} · {task.volunteerId}
+                  </Text>
+                </View>
+              )}
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>
+                  <Text className={styles.requiredMark}>*</Text>
+                  {task.status === 'pending' ? '选择志愿者' : '新志愿者'}
+                </Text>
+                <Picker
+                  mode="selector"
+                  range={volunteerNames}
+                  value={availableVolunteers.findIndex(v => v.id === reassignVolunteerId)}
+                  onChange={(e: any) => {
+                    const idx = parseInt(e.detail.value);
+                    setReassignVolunteerId(availableVolunteers[idx]?.id || '');
+                  }}
+                >
+                  <View className={styles.pickerInput}>
+                    {reassignVolunteerId
+                      ? availableVolunteers.find(v => v.id === reassignVolunteerId)?.name + ' · ' + availableVolunteers.find(v => v.id === reassignVolunteerId)?.area
+                      : '请选择志愿者'
+                    }
+                  </View>
+                </Picker>
+              </View>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>改派原因（选填）</Text>
+                <Textarea
+                  className={styles.textareaInput}
+                  placeholder="请输入改派原因，如：志愿者临时有事、调整排班等"
+                  value={reassignReason}
+                  onInput={(e: any) => setReassignReason(e.detail.value)}
+                  maxlength={200}
+                  autoHeight
+                />
+              </View>
+            </View>
+
+            <View className={styles.modalFooter}>
+              <View className={styles.modalBtnSecondary} onClick={() => setShowReassignModal(false)}>
+                <Text className={styles.modalBtnSecondaryText}>取消</Text>
+              </View>
+              <View className={styles.modalBtnPrimary} onClick={handleReassign}>
+                <Text className={styles.modalBtnPrimaryText}>
+                  {task.status === 'pending' ? '确认指派' : '确认改派'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

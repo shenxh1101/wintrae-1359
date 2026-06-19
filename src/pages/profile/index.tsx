@@ -67,7 +67,14 @@ const ProfilePage: React.FC = () => {
 
   const adminMenus = [
     {
-      icon: '📢',
+      icon: '�',
+      iconBg: '#E6F4FF',
+      title: '任务追踪看板',
+      desc: '全状态任务跟踪与管理',
+      onClick: () => Taro.navigateTo({ url: '/pages/task-tracking/index' })
+    },
+    {
+      icon: '�📢',
       iconBg: '#FFECE4',
       title: '发布任务',
       desc: '新建居民探访任务',
@@ -90,8 +97,8 @@ const ProfilePage: React.FC = () => {
       onClick: () => Taro.navigateTo({ url: '/pages/abnormal-handle/index' })
     },
     {
-      icon: '📊',
-      iconBg: '#E6F4FF',
+      icon: '�',
+      iconBg: '#F3E8FF',
       title: '数据统计',
       desc: '服务时长 & 月度汇总',
       onClick: () => Taro.navigateTo({ url: '/pages/statistics/index' })
