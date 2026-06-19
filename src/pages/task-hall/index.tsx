@@ -211,11 +211,6 @@ const TaskHallPage: React.FC = () => {
             <TaskCard
               key={task.id}
               task={task}
-              onClick={() => {
-                if (task.status === 'pending') {
-                  handleSignup(task);
-                }
-              }}
             />
           ))
         )}

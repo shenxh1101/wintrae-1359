@@ -1,0 +1,348 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-page;
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.statItem {
+  flex: 1;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-card;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-error;
+  margin-bottom: 4rpx;
+}
+
+.statValueGreen {
+  color: $color-success;
+}
+
+.statValueGray {
+  color: $color-text-secondary;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.tabBar {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-xs;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.tabItem {
+  flex: 1;
+  height: 72rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  @include flex-center;
+  transition: all $transition-base;
+}
+
+.tabItemActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.3);
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border-light;
+}
+
+.residentInfo {
+  flex: 1;
+}
+
+.residentName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.metaRow {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.statusBadge {
+  padding: 6rpx 20rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.statusPending {
+  background: rgba($color-error, 0.1);
+  color: $color-error;
+}
+
+.statusHandled {
+  background: rgba($color-success, 0.1);
+  color: $color-success;
+}
+
+.abnormalBox {
+  background: rgba($color-error, 0.06);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-left: 6rpx solid $color-error;
+}
+
+.abnormalLabel {
+  font-size: $font-size-xs;
+  color: $color-error;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.abnormalText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-loose;
+}
+
+.serviceContent {
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-border-light;
+}
+
+.serviceLabel {
+  font-size: $font-size-xs;
+  color: $color-text-placeholder;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.serviceText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+}
+
+.handledBox {
+  background: rgba($color-success, 0.06);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  border-left: 6rpx solid $color-success;
+  margin-bottom: $spacing-md;
+}
+
+.handledLabel {
+  font-size: $font-size-xs;
+  color: $color-success;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.handledNote {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-xs;
+}
+
+.handledMeta {
+  font-size: $font-size-xs;
+  color: $color-text-placeholder;
+}
+
+.actionRow {
+  display: flex;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid $color-border-light;
+}
+
+.btn {
+  flex: 1;
+  height: 72rpx;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  @include flex-center;
+}
+
+.btnDetail {
+  background: $color-bg-page;
+  color: $color-text-secondary;
+}
+
+.btnHandle {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  box-shadow: 0 4rpx 12rpx rgba($color-primary, 0.25);
+}
+
+.emptyState {
+  padding: $spacing-2xl $spacing-xl;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 100rpx;
+  opacity: 0.5;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-placeholder;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+}
+
+.modalSheet {
+  width: 100%;
+  background: $color-bg-page;
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  padding-bottom: calc(#{$spacing-lg} + env(safe-area-inset-bottom));
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-round;
+  background: $color-bg-page;
+  @include flex-center;
+}
+
+.modalCloseText {
+  font-size: 32rpx;
+  color: $color-text-secondary;
+}
+
+.modalGroup {
+  margin-bottom: $spacing-lg;
+}
+
+.modalLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.modalAbnormalBox {
+  background: rgba($color-error, 0.06);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  border-left: 6rpx solid $color-error;
+}
+
+.modalAbnormalText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-loose;
+}
+
+.modalTextarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: $spacing-md;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  line-height: $line-height-normal;
+  box-sizing: border-box;
+}
+
+.modalFooter {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-xl;
+}
+
+.modalBtn {
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  @include flex-center;
+}
+
+.modalBtnCancel {
+  background: $color-bg-page;
+  color: $color-text-secondary;
+}
+
+.modalBtnSubmit {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
+}

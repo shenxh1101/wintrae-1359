@@ -75,6 +75,10 @@ export interface VisitRecord {
   nextSuggestion?: string;
   serviceDuration: number;
   createdAt: string;
+  abnormalHandled?: boolean;
+  abnormalHandleNote?: string;
+  abnormalHandledAt?: string;
+  abnormalHandledBy?: string;
 }
 
 // 物资类型

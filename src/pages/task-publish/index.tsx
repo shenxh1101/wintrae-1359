@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppContext } from '@/store/AppContext';
-import { generateId, formatDate } from '@/utils';
+import { generateId, formatDateISO } from '@/utils';
 import type { AreaType, ServiceType, UrgencyLevel, Task } from '@/types';
 
 const AREAS: AreaType[] = ['东区', '西区', '南区', '北区', '中心区'];
@@ -25,7 +25,7 @@ const TaskPublishPage: React.FC = () => {
   const [area, setArea] = useState<AreaType>('东区');
   const [serviceType, setServiceType] = useState<ServiceType>('生活照料');
   const [urgency, setUrgency] = useState<UrgencyLevel>('medium');
-  const [scheduledDate, setScheduledDate] = useState(formatDate(new Date()));
+  const [scheduledDate, setScheduledDate] = useState(formatDateISO(new Date()));
   const [scheduledTime, setScheduledTime] = useState('09:00');
   const [estimatedDuration, setEstimatedDuration] = useState('60');
   const [description, setDescription] = useState('');

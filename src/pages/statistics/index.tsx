@@ -21,12 +21,14 @@ const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8�
 const StatisticsPage: React.FC = () => {
   const { tasks, records, pendingVolunteers } = useAppContext();
   const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState((now.getMonth()).toString());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+
+  const yearOptions = Array.from({ length: 5 }, (_, i) => (now.getFullYear() - i));
 
   const currentMonthData = useMemo(() => {
-    const year = parseInt(selectedYear);
-    const month = parseInt(selectedMonth);
+    const year = selectedYear;
+    const month = selectedMonth;
 
     const monthTasks = tasks.filter((t) => {
       const d = new Date(t.scheduledDate);
@@ -39,21 +41,27 @@ const StatisticsPage: React.FC = () => {
     });
 
     const completedTasks = monthTasks.filter((t) => t.status === 'completed').length;
+    const assignedTasks = monthTasks.filter((t) => t.status === 'assigned' || t.status === 'in_progress').length;
+    const pendingTasks = monthTasks.filter((t) => t.status === 'pending').length;
     const totalHours = monthRecords.reduce((sum, r) => sum + r.serviceDuration, 0);
     const activeVolunteers = new Set(monthRecords.map((r) => r.volunteerId)).size;
+    const abnormalCount = monthRecords.filter((r) => r.abnormalSituation && r.abnormalSituation.length > 0 && !r.abnormalHandled).length;
 
     return {
       totalTasks: monthTasks.length,
       completedTasks,
+      assignedTasks,
+      pendingTasks,
       totalHours: Math.round(totalHours / 60),
       activeVolunteers,
+      abnormalCount,
     };
   }, [tasks, records, selectedYear, selectedMonth]);
 
   const monthlyTrend = useMemo(() => {
     const data = [];
     for (let i = 5; i >= 0; i--) {
-      const date = new Date();
+      const date = new Date(selectedYear, selectedMonth, 1);
       date.setMonth(date.getMonth() - i);
       const month = date.getMonth();
       const year = date.getFullYear();
@@ -71,13 +79,15 @@ const StatisticsPage: React.FC = () => {
       const hours = Math.round(monthRecords.reduce((sum, r) => sum + r.serviceDuration, 0) / 60);
 
       data.push({
+        label: `${year % 100}年${MONTH_NAMES[month]}`,
         month: MONTH_NAMES[month],
+        year,
         tasks: monthTasks.length,
         hours,
       });
     }
     return data;
-  }, [tasks, records]);
+  }, [tasks, records, selectedYear, selectedMonth]);
 
   const maxTasks = Math.max(...monthlyTrend.map((d) => d.tasks), 1);
   const maxHours = Math.max(...monthlyTrend.map((d) => d.hours), 1);
@@ -85,34 +95,43 @@ const StatisticsPage: React.FC = () => {
   const serviceTypeStats = useMemo(() => {
     const counts = new Map<ServiceType, number>();
     tasks.forEach((t) => {
-      counts.set(t.serviceType, (counts.get(t.serviceType) || 0) + 1);
+      const d = new Date(t.scheduledDate);
+      if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+        counts.set(t.serviceType, (counts.get(t.serviceType) || 0) + 1);
+      }
     });
     const result = Array.from(counts.entries())
       .map(([type, count]) => ({ type, count }))
       .sort((a, b) => b.count - a.count);
     const max = Math.max(...result.map((r) => r.count), 1);
     return result.map((r) => ({ ...r, percentage: (r.count / max) * 100 }));
-  }, [tasks]);
+  }, [tasks, selectedYear, selectedMonth]);
 
   const areaStats = useMemo(() => {
     const counts = new Map<AreaType, number>();
     tasks.forEach((t) => {
-      counts.set(t.area, (counts.get(t.area) || 0) + 1);
+      const d = new Date(t.scheduledDate);
+      if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+        counts.set(t.area, (counts.get(t.area) || 0) + 1);
+      }
     });
     const result = Array.from(counts.entries())
       .map(([area, count]) => ({ area, count }))
       .sort((a, b) => b.count - a.count);
     const max = Math.max(...result.map((r) => r.count), 1);
     return result.map((r) => ({ ...r, percentage: (r.count / max) * 100 }));
-  }, [tasks]);
+  }, [tasks, selectedYear, selectedMonth]);
 
   const volunteerRank = useMemo(() => {
     const hoursMap = new Map<string, { name: string; hours: number; tasks: number }>();
     records.forEach((r) => {
-      const existing = hoursMap.get(r.volunteerId) || { name: r.volunteerName, hours: 0, tasks: 0 };
-      existing.hours += r.serviceDuration;
-      existing.tasks += 1;
-      hoursMap.set(r.volunteerId, existing);
+      const d = new Date(r.arrivalTime);
+      if (d.getFullYear() === selectedYear && d.getMonth() === selectedMonth) {
+        const existing = hoursMap.get(r.volunteerId) || { name: r.volunteerName, hours: 0, tasks: 0 };
+        existing.hours += r.serviceDuration;
+        existing.tasks += 1;
+        hoursMap.set(r.volunteerId, existing);
+      }
     });
     const result = Array.from(hoursMap.values())
       .map((v) => ({ ...v, hours: Math.round(v.hours / 60) }))
@@ -120,18 +139,43 @@ const StatisticsPage: React.FC = () => {
       .slice(0, 5);
     const max = Math.max(...result.map((r) => r.hours), 1);
     return result.map((r) => ({ ...r, percentage: (r.hours / max) * 100 }));
-  }, [records]);
+  }, [records, selectedYear, selectedMonth]);
 
-  const handleYearChange = (e: any) => setSelectedYear(e.detail.value);
-  const handleMonthChange = (e: any) => setSelectedMonth(e.detail.value);
+  const handleYearChange = (e: any) => {
+    const idx = parseInt(e.detail.value);
+    setSelectedYear(yearOptions[idx]);
+  };
+
+  const handleMonthChange = (e: any) => {
+    setSelectedMonth(parseInt(e.detail.value));
+  };
 
   const handleExport = () => {
     Taro.showLoading({ title: '正在生成...' });
     setTimeout(() => {
       Taro.hideLoading();
+      const serviceTypeList = serviceTypeStats.map(s => `  · ${s.type}：${s.count}件`).join('\n') || '  无数据';
+      const areaList = areaStats.map(a => `  · ${a.area}：${a.count}件`).join('\n') || '  无数据';
+      const volunteerList = volunteerRank.map((v, i) => `  ${i + 1}. ${v.name}：${v.hours}小时（${v.tasks}次任务）`).join('\n') || '  无数据';
+
       Taro.showModal({
         title: '导出成功',
-        content: `${selectedYear}年${parseInt(selectedMonth) + 1}月度汇总已生成\n\n📊 任务总数：${currentMonthData.totalTasks}件\n✅ 已完成：${currentMonthData.completedTasks}件\n⏱️ 服务时长：${currentMonthData.totalHours}小时\n👥 参与志愿者：${currentMonthData.activeVolunteers}人\n\n文件已保存到系统下载目录`,
+        content: `📊 ${selectedYear}年${selectedMonth + 1}月 服务汇总报告\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `� 任务概况\n` +
+          `  任务总数：${currentMonthData.totalTasks}件\n` +
+          `  待报名：${currentMonthData.pendingTasks}件\n` +
+          `  进行中：${currentMonthData.assignedTasks}件\n` +
+          `  已完成：${currentMonthData.completedTasks}件\n\n` +
+          `⏱️ 服务数据\n` +
+          `  总服务时长：${currentMonthData.totalHours}小时\n` +
+          `  参与志愿者：${currentMonthData.activeVolunteers}人\n` +
+          `  异常记录：${currentMonthData.abnormalCount}条\n\n` +
+          `🎯 服务类型分布\n${serviceTypeList}\n\n` +
+          `📍 区域任务分布\n${areaList}\n\n` +
+          `🏆 志愿者排行（Top5）\n${volunteerList}\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `报告已生成，文件已保存到系统下载目录`,
         showCancel: false,
         confirmColor: '#FF7A45',
       });
@@ -145,19 +189,25 @@ const StatisticsPage: React.FC = () => {
     return '';
   };
 
-  const yearOptions = Array.from({ length: 5 }, (_, i) => (now.getFullYear() - i).toString());
-
   return (
     <View className={styles.pageContainer}>
       <View className={styles.pageHeader}>
         <View className={styles.headerTitle}>
           <Text className={styles.titleText}>📈 数据概览</Text>
           <View style={{ display: 'flex', gap: '16rpx' }}>
-            <picker range={yearOptions} value={yearOptions.indexOf(selectedYear)} onChange={handleYearChange}>
+            <picker
+              range={yearOptions.map(y => `${y}年`)}
+              value={yearOptions.indexOf(selectedYear)}
+              onChange={handleYearChange}
+            >
               <View className={styles.monthPicker}>{selectedYear}年</View>
             </picker>
-            <picker range={MONTH_NAMES} value={parseInt(selectedMonth)} onChange={handleMonthChange}>
-              <View className={styles.monthPicker}>{MONTH_NAMES[parseInt(selectedMonth)]}</View>
+            <picker
+              range={MONTH_NAMES}
+              value={selectedMonth}
+              onChange={handleMonthChange}
+            >
+              <View className={styles.monthPicker}>{MONTH_NAMES[selectedMonth]}</View>
             </picker>
           </View>
         </View>
@@ -185,7 +235,7 @@ const StatisticsPage: React.FC = () => {
         <View className={styles.cardHeader}>
           <View className={styles.cardTitle}>
             <Text className={styles.cardIcon}>📊</Text>
-            <Text className={styles.cardTitleText}>月度趋势</Text>
+            <Text className={styles.cardTitleText}>月度趋势（近6个月）</Text>
           </View>
           <View className={styles.exportBtn} onClick={handleExport}>
             📥 导出汇总
@@ -194,8 +244,8 @@ const StatisticsPage: React.FC = () => {
 
         <View className={styles.chartContainer}>
           <View className={styles.chartBars}>
-            {monthlyTrend.map((item) => (
-              <View key={item.month} className={styles.barGroup}>
+            {monthlyTrend.map((item, idx) => (
+              <View key={idx} className={styles.barGroup}>
                 <View className={styles.barWrapper}>
                   <Text className={styles.barValue}>{item.tasks}</Text>
                   <View
@@ -210,7 +260,7 @@ const StatisticsPage: React.FC = () => {
                     style={{ height: `${(item.hours / maxHours) * 180 + 20}rpx` }}
                   />
                 </View>
-                <Text className={styles.barLabel}>{item.month}</Text>
+                <Text className={styles.barLabel}>{item.label}</Text>
               </View>
             ))}
           </View>
@@ -232,13 +282,13 @@ const StatisticsPage: React.FC = () => {
         <View className={styles.cardHeader}>
           <View className={styles.cardTitle}>
             <Text className={styles.cardIcon}>🏆</Text>
-            <Text className={styles.cardTitleText}>志愿者排行</Text>
+            <Text className={styles.cardTitleText}>志愿者排行（当月Top5）</Text>
           </View>
         </View>
 
         {volunteerRank.length === 0 ? (
           <View style={{ textAlign: 'center', padding: '32rpx', color: '#86909C' }}>
-            暂无排行数据
+            当月暂无排行数据
           </View>
         ) : (
           <View className={styles.rankList}>
@@ -256,7 +306,7 @@ const StatisticsPage: React.FC = () => {
                     />
                   </View>
                 </View>
-                <Text className={styles.rankValue}>{item.hours}h</Text>
+                <Text className={styles.rankValue}>{item.hours}h / {item.tasks}次</Text>
               </View>
             ))}
           </View>
@@ -267,54 +317,66 @@ const StatisticsPage: React.FC = () => {
         <View className={styles.cardHeader}>
           <View className={styles.cardTitle}>
             <Text className={styles.cardIcon}>🎯</Text>
-            <Text className={styles.cardTitleText}>服务类型分布</Text>
+            <Text className={styles.cardTitleText}>服务类型分布（当月）</Text>
           </View>
         </View>
 
-        {serviceTypeStats.map((item) => (
-          <View key={item.type} className={styles.statRow}>
-            <View className={styles.statRowLabel}>
-              <Text className={styles.typeIcon}>{SERVICE_ICONS[item.type]}</Text>
-              <Text>{item.type}</Text>
-            </View>
-            <View className={styles.statRowValue}>
-              <View className={styles.progressMini}>
-                <View
-                  className={styles.progressFill}
-                  style={{ width: `${item.percentage}%` }}
-                />
-              </View>
-              <Text className={styles.countText}>{item.count}</Text>
-            </View>
+        {serviceTypeStats.length === 0 ? (
+          <View style={{ textAlign: 'center', padding: '32rpx', color: '#86909C' }}>
+            当月暂无数据
           </View>
-        ))}
+        ) : (
+          serviceTypeStats.map((item) => (
+            <View key={item.type} className={styles.statRow}>
+              <View className={styles.statRowLabel}>
+                <Text className={styles.typeIcon}>{SERVICE_ICONS[item.type]}</Text>
+                <Text>{item.type}</Text>
+              </View>
+              <View className={styles.statRowValue}>
+                <View className={styles.progressMini}>
+                  <View
+                    className={styles.progressFill}
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </View>
+                <Text className={styles.countText}>{item.count}</Text>
+              </View>
+            </View>
+          ))
+        )}
       </View>
 
       <View className={styles.card}>
         <View className={styles.cardHeader}>
           <View className={styles.cardTitle}>
             <Text className={styles.cardIcon}>📍</Text>
-            <Text className={styles.cardTitleText}>区域任务分布</Text>
+            <Text className={styles.cardTitleText}>区域任务分布（当月）</Text>
           </View>
         </View>
 
-        {areaStats.map((item) => (
-          <View key={item.area} className={styles.statRow}>
-            <View className={styles.statRowLabel}>
-              <Text className={styles.typeIcon}>🏘️</Text>
-              <Text>{item.area}</Text>
-            </View>
-            <View className={styles.statRowValue}>
-              <View className={styles.progressMini}>
-                <View
-                  className={styles.progressFill}
-                  style={{ width: `${item.percentage}%` }}
-                />
-              </View>
-              <Text className={styles.countText}>{item.count}</Text>
-            </View>
+        {areaStats.length === 0 ? (
+          <View style={{ textAlign: 'center', padding: '32rpx', color: '#86909C' }}>
+            当月暂无数据
           </View>
-        ))}
+        ) : (
+          areaStats.map((item) => (
+            <View key={item.area} className={styles.statRow}>
+              <View className={styles.statRowLabel}>
+                <Text className={styles.typeIcon}>🏘️</Text>
+                <Text>{item.area}</Text>
+              </View>
+              <View className={styles.statRowValue}>
+                <View className={styles.progressMini}>
+                  <View
+                    className={styles.progressFill}
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </View>
+                <Text className={styles.countText}>{item.count}</Text>
+              </View>
+            </View>
+          ))
+        )}
       </View>
     </View>
   );

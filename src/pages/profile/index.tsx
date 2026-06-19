@@ -11,7 +11,7 @@ const ProfilePage: React.FC = () => {
     t => (t.volunteerId === currentVolunteer.id) && t.status === 'completed'
   ).length;
 
-  const abnormalCount = records.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0).length;
+  const abnormalCount = records.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0 && !r.abnormalHandled).length;
 
   const menus = [
     {
@@ -72,7 +72,7 @@ const ProfilePage: React.FC = () => {
       title: '异常处理',
       desc: abnormalCount > 0 ? `${abnormalCount} 条待跟进` : '暂无异常',
       badge: abnormalCount > 0 ? abnormalCount : undefined,
-      onClick: () => Taro.switchTab({ url: '/pages/records/index' })
+      onClick: () => Taro.navigateTo({ url: '/pages/abnormal-handle/index' })
     },
     {
       icon: '📊',

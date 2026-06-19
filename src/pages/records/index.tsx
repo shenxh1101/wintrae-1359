@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import RecordCard from '@/components/RecordCard';
 import { useAppContext } from '@/store/AppContext';
-import { generateId } from '@/utils';
+import { generateId, formatDateISO, formatDateTimeISO } from '@/utils';
 import type { VisitRecord } from '@/types';
 import classnames from 'classnames';
 
@@ -15,13 +15,25 @@ const RecordsPage: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('all');
   const [showForm, setShowForm] = useState(false);
 
+  const now = new Date();
+  const defaultArrivalDate = formatDateISO(now);
+  const defaultArrivalTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const departureDate = new Date(now.getTime() + 60 * 60 * 1000);
+  const defaultDepartureDate = formatDateISO(departureDate);
+  const defaultDepartureTime = `${String(departureDate.getHours()).padStart(2, '0')}:${String(departureDate.getMinutes()).padStart(2, '0')}`;
+
   const [formData, setFormData] = useState({
     residentName: '',
     address: '',
     serviceContent: '',
     abnormalSituation: '',
     nextSuggestion: '',
-    taskId: ''
+    taskId: '',
+    arrivalDate: defaultArrivalDate,
+    arrivalTime: defaultArrivalTime,
+    departureDate: defaultDepartureDate,
+    departureTime: defaultDepartureTime,
+    serviceDuration: '60'
   });
   const [photos, setPhotos] = useState<string[]>([]);
 
@@ -30,7 +42,7 @@ const RecordsPage: React.FC = () => {
     if (filter === 'mine') {
       list = list.filter(r => r.volunteerId === currentVolunteer.id);
     } else if (filter === 'abnormal') {
-      list = list.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0);
+      list = list.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0 && !r.abnormalHandled);
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [records, filter, currentVolunteer]);
@@ -39,7 +51,7 @@ const RecordsPage: React.FC = () => {
     const mine = records.filter(r => r.volunteerId === currentVolunteer.id);
     const total = mine.length;
     const totalHours = Math.round(mine.reduce((s, r) => s + r.serviceDuration, 0) / 60);
-    const abnormal = records.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0).length;
+    const abnormal = records.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0 && !r.abnormalHandled).length;
     return { total, totalHours, abnormal };
   }, [records, currentVolunteer]);
 
@@ -51,13 +63,22 @@ const RecordsPage: React.FC = () => {
   }, [tasks, currentVolunteer]);
 
   const resetForm = () => {
+    const n = new Date();
+    const arrDate = formatDateISO(n);
+    const arrTime = `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+    const depDate = new Date(n.getTime() + 60 * 60 * 1000);
     setFormData({
       residentName: '',
       address: '',
       serviceContent: '',
       abnormalSituation: '',
       nextSuggestion: '',
-      taskId: ''
+      taskId: '',
+      arrivalDate: arrDate,
+      arrivalTime: arrTime,
+      departureDate: formatDateISO(depDate),
+      departureTime: `${String(depDate.getHours()).padStart(2, '0')}:${String(depDate.getMinutes()).padStart(2, '0')}`,
+      serviceDuration: '60'
     });
     setPhotos([]);
   };
@@ -90,8 +111,16 @@ const RecordsPage: React.FC = () => {
       Taro.showToast({ title: '请填写服务内容', icon: 'none' });
       return;
     }
+    const duration = parseInt(formData.serviceDuration) || 60;
+    if (duration <= 0) {
+      Taro.showToast({ title: '服务时长需大于0', icon: 'none' });
+      return;
+    }
 
     const now = new Date();
+    const arrivalIso = `${formData.arrivalDate}T${formData.arrivalTime}:00`;
+    const departureIso = `${formData.departureDate}T${formData.departureTime}:00`;
+
     const newRecord: VisitRecord = {
       id: generateId(),
       taskId: formData.taskId || undefined,
@@ -99,13 +128,13 @@ const RecordsPage: React.FC = () => {
       volunteerName: currentVolunteer.name,
       residentName: formData.residentName,
       address: formData.address || '未填写地址',
-      arrivalTime: now.toISOString(),
-      departureTime: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+      arrivalTime: arrivalIso,
+      departureTime: departureIso,
       serviceContent: formData.serviceContent,
       photos,
       abnormalSituation: formData.abnormalSituation,
       nextSuggestion: formData.nextSuggestion,
-      serviceDuration: 60,
+      serviceDuration: duration,
       createdAt: now.toISOString()
     };
 
@@ -223,6 +252,50 @@ const RecordsPage: React.FC = () => {
                   </View>
                 </View>
               )}
+              <View className={styles.formGroup}>
+                <Text className={classnames(styles.formLabel, styles.formLabelRequired)}>到达时间</Text>
+                <View className={styles.timeRow}>
+                  <View className={styles.formGroup}>
+                    <Text className={styles.timeRowLabel}>日期</Text>
+                    <picker mode="date" value={formData.arrivalDate} onChange={(e) => setFormData({ ...formData, arrivalDate: e.detail.value })}>
+                      <View className={styles.pickerBox}>{formData.arrivalDate}</View>
+                    </picker>
+                  </View>
+                  <View className={styles.formGroup}>
+                    <Text className={styles.timeRowLabel}>时间</Text>
+                    <picker mode="time" value={formData.arrivalTime} onChange={(e) => setFormData({ ...formData, arrivalTime: e.detail.value })}>
+                      <View className={styles.pickerBox}>{formData.arrivalTime}</View>
+                    </picker>
+                  </View>
+                </View>
+              </View>
+              <View className={styles.formGroup}>
+                <Text className={styles.formLabel}>离开时间</Text>
+                <View className={styles.timeRow}>
+                  <View className={styles.formGroup}>
+                    <Text className={styles.timeRowLabel}>日期</Text>
+                    <picker mode="date" value={formData.departureDate} onChange={(e) => setFormData({ ...formData, departureDate: e.detail.value })}>
+                      <View className={styles.pickerBox}>{formData.departureDate}</View>
+                    </picker>
+                  </View>
+                  <View className={styles.formGroup}>
+                    <Text className={styles.timeRowLabel}>时间</Text>
+                    <picker mode="time" value={formData.departureTime} onChange={(e) => setFormData({ ...formData, departureTime: e.detail.value })}>
+                      <View className={styles.pickerBox}>{formData.departureTime}</View>
+                    </picker>
+                  </View>
+                </View>
+              </View>
+              <View className={styles.formGroup}>
+                <Text className={classnames(styles.formLabel, styles.formLabelRequired)}>服务时长（分钟）</Text>
+                <Input
+                  type="number"
+                  className={styles.formInput}
+                  placeholder="请输入实际服务时长"
+                  value={formData.serviceDuration}
+                  onInput={(e) => setFormData({ ...formData, serviceDuration: e.detail.value })}
+                />
+              </View>
               <View className={styles.formGroup}>
                 <Text className={classnames(styles.formLabel, styles.formLabelRequired)}>居民姓名</Text>
                 <Input

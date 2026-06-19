@@ -243,6 +243,38 @@
   line-height: $line-height-normal;
 }
 
+.timeRow {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.timeRow .formGroup {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.timeRowLabel {
+  font-size: $font-size-xs;
+  color: $color-text-placeholder;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.pickerBox {
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+
 .photoGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
