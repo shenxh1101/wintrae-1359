@@ -167,3 +167,150 @@
   @include flex-center;
   box-shadow: 0 8rpx 24rpx rgba($color-primary, 0.3);
 }
+
+.assignGroup {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.assignItem {
+  flex: 1;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-lg;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+  cursor: pointer;
+}
+
+.assignItemActive {
+  background: rgba($color-primary, 0.08);
+  border-color: $color-primary;
+}
+
+.assignItemHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.assignItemIcon {
+  font-size: 36rpx;
+}
+
+.assignItemLabel {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.assignItemDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+}
+
+.assignItemActive .assignItemLabel {
+  color: $color-primary;
+}
+
+.shiftBadge {
+  display: inline-flex;
+  padding: 12rpx 28rpx;
+  background: linear-gradient(135deg, rgba($color-primary, 0.15) 0%, rgba($color-primary-light, 0.15) 100%);
+  border-radius: $radius-pill;
+  border: 2rpx solid rgba($color-primary, 0.3);
+}
+
+.shiftBadgeText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  @include flex-center;
+  z-index: 9999;
+}
+
+.modalContent {
+  width: 560rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  padding: $spacing-xl $spacing-lg $spacing-lg;
+  text-align: center;
+  animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalIcon {
+  width: 120rpx;
+  height: 120rpx;
+  margin: 0 auto $spacing-md;
+  background: linear-gradient(135deg, rgba($color-success, 0.15) 0%, rgba($color-success, 0.05) 100%);
+  border-radius: 50%;
+  @include flex-center;
+  font-size: 64rpx;
+}
+
+.modalTitle {
+  display: block;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.modalDesc {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-xl;
+}
+
+.modalButtons {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.modalBtnSecondary {
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-page;
+  color: $color-text-secondary;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  @include flex-center;
+  border: 2rpx solid $color-border-light;
+}
+
+.modalBtnPrimary {
+  flex: 1;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  @include flex-center;
+  box-shadow: 0 6rpx 20rpx rgba($color-primary, 0.3);
+}

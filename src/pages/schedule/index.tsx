@@ -5,25 +5,34 @@ import styles from './index.module.scss';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import TaskCard from '@/components/TaskCard';
 import { useAppContext } from '@/store/AppContext';
-import { formatDate } from '@/utils';
-import type { Task } from '@/types';
+import { formatDate, generateFlowRecord } from '@/utils';
+import type { Task, ShiftType } from '@/types';
+
+const SHIFT_ORDER: ShiftType[] = ['上午', '下午', '全天'];
+
+const SHIFT_INFO: Record<ShiftType, { icon: string; desc: string }> = {
+  '上午': { icon: '🌅', desc: '06:00 - 12:00' },
+  '下午': { icon: '🌆', desc: '12:00 - 18:00' },
+  '全天': { icon: '🌞', desc: '18:00以后或跨时段' },
+};
 
 const SchedulePage: React.FC = () => {
-  const { tasks, currentVolunteer, setTasks } = useAppContext();
+  const { tasks, setTasks, currentVolunteer } = useAppContext();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useDidShow(() => {
-    console.log('[Schedule] page show');
+    setRefreshKey(k => k + 1);
   });
 
   const myTasks = useMemo(() => {
     return tasks.filter((t) => t.volunteerId === currentVolunteer.id || t.volunteerName === currentVolunteer.name);
-  }, [tasks, currentVolunteer]);
+  }, [tasks, currentVolunteer, refreshKey]);
 
   const markedDates = useMemo(() => {
     return myTasks.map((t) => t.scheduledDate);
@@ -34,6 +43,18 @@ const SchedulePage: React.FC = () => {
       .filter((t) => t.scheduledDate === selectedDate)
       .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
   }, [myTasks, selectedDate]);
+
+  const groupedTasks = useMemo(() => {
+    const groups: Record<ShiftType, Task[]> = {
+      '上午': [],
+      '下午': [],
+      '全天': [],
+    };
+    selectedTasks.forEach(task => {
+      groups[task.shiftType || '全天'].push(task);
+    });
+    return groups;
+  }, [selectedTasks]);
 
   const summary = useMemo(() => {
     const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -63,6 +84,10 @@ const SchedulePage: React.FC = () => {
     }
   };
 
+  const handleTaskClick = (task: Task) => {
+    Taro.navigateTo({ url: `/pages/task-detail/index?id=${task.id}` });
+  };
+
   const handleCancel = (task: Task) => {
     Taro.showModal({
       title: '取消任务',
@@ -71,12 +96,28 @@ const SchedulePage: React.FC = () => {
       confirmColor: '#F5222D',
       success: (res) => {
         if (res.confirm) {
+          const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+          const cancelRecord = generateFlowRecord(task.id, 'cancelled', operator, {
+            remark: '志愿者取消任务，重新开放报名',
+            previousVolunteerId: task.volunteerId,
+            previousVolunteerName: task.volunteerName,
+          });
+          const reopenRecord = generateFlowRecord(task.id, 'reopened', operator, {
+            remark: '任务重新开放报名',
+          });
           const updated = tasks.map((t) =>
             t.id === task.id
-              ? { ...t, status: 'pending' as const, volunteerId: undefined, volunteerName: undefined }
+              ? { 
+                  ...t, 
+                  status: 'pending' as const, 
+                  volunteerId: undefined, 
+                  volunteerName: undefined,
+                  flowRecords: [...t.flowRecords, cancelRecord, reopenRecord]
+                }
               : t
           );
           setTasks(updated);
+          setRefreshKey(k => k + 1);
           Taro.showToast({ title: '已取消任务', icon: 'success' });
         }
       }
@@ -88,6 +129,19 @@ const SchedulePage: React.FC = () => {
       itemList: ['与其他志愿者换班', '调整到其他时间'],
       success: (res) => {
         if (res.tapIndex === 0) {
+          const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+          const exchangeRecord = generateFlowRecord(task.id, 'exchange', operator, {
+            remark: '志愿者申请换班，等待新志愿者接手',
+            previousVolunteerId: task.volunteerId,
+            previousVolunteerName: task.volunteerName,
+          });
+          const updated = tasks.map((t) =>
+            t.id === task.id
+              ? { ...t, flowRecords: [...t.flowRecords, exchangeRecord] }
+              : t
+          );
+          setTasks(updated);
+          setRefreshKey(k => k + 1);
           Taro.showToast({ title: '换班申请已提交', icon: 'success' });
         } else {
           Taro.showToast({ title: '请联系管理员调整', icon: 'none' });
@@ -104,10 +158,21 @@ const SchedulePage: React.FC = () => {
       confirmColor: '#52C41A',
       success: (res) => {
         if (res.confirm) {
+          const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+          const startRecord = generateFlowRecord(task.id, 'started', operator, {
+            remark: '志愿者开始服务',
+          });
           const updated = tasks.map((t) =>
-            t.id === task.id ? { ...t, status: 'in_progress' as const } : t
+            t.id === task.id 
+              ? { 
+                  ...t, 
+                  status: 'in_progress' as const,
+                  flowRecords: [...t.flowRecords, startRecord]
+                } 
+              : t
           );
           setTasks(updated);
+          setRefreshKey(k => k + 1);
           Taro.showToast({ title: '任务进行中', icon: 'success' });
         }
       }
@@ -118,27 +183,29 @@ const SchedulePage: React.FC = () => {
     if (task.status === 'cancelled' || task.status === 'completed') return null;
     return (
       <View className={styles.actionBtns}>
-        <View className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={() => handleCancel(task)}>
+        <View className={`${styles.actionBtn} ${styles.cancelBtn}`} onClick={(e) => { e.stopPropagation(); handleCancel(task); }}>
           <Text className={styles.cancelBtnText}>取消任务</Text>
         </View>
         {task.status === 'assigned' && (
           <>
-            <View className={`${styles.actionBtn} ${styles.exchangeBtn}`} onClick={() => handleExchange(task)}>
+            <View className={`${styles.actionBtn} ${styles.exchangeBtn}`} onClick={(e) => { e.stopPropagation(); handleExchange(task); }}>
               <Text className={styles.exchangeBtnText}>申请换班</Text>
             </View>
-            <View className={`${styles.actionBtn} ${styles.startBtn}`} onClick={() => handleStart(task)}>
+            <View className={`${styles.actionBtn} ${styles.startBtn}`} onClick={(e) => { e.stopPropagation(); handleStart(task); }}>
               <Text className={styles.startBtnText}>开始任务</Text>
             </View>
           </>
         )}
         {task.status === 'in_progress' && (
-          <View className={`${styles.actionBtn} ${styles.startBtn}`} onClick={() => Taro.navigateTo({ url: '/pages/records/index' })}>
+          <View className={`${styles.actionBtn} ${styles.startBtn}`} onClick={(e) => { e.stopPropagation(); Taro.navigateTo({ url: `/pages/records/index?taskId=${task.id}` }); }}>
             <Text className={styles.startBtnText}>填写记录</Text>
           </View>
         )}
       </View>
     );
   };
+
+  const hasTasks = selectedTasks.length > 0;
 
   return (
     <ScrollView scrollY className={styles.pageContainer} enhanced showScrollbar={false}>
@@ -187,7 +254,7 @@ const SchedulePage: React.FC = () => {
         <Text className={styles.dateText}>{formatDate(selectedDate)}</Text>
       </View>
 
-      {selectedTasks.length === 0 ? (
+      {!hasTasks ? (
         <View className={styles.emptySchedule}>
           <Text className={styles.emptyIcon}>🌴</Text>
           <Text className={styles.emptyText}>当日暂无排班任务</Text>
@@ -196,12 +263,31 @@ const SchedulePage: React.FC = () => {
           </View>
         </View>
       ) : (
-        selectedTasks.map((task) => (
-          <View key={task.id}>
-            <TaskCard task={task} showAction={false} />
-            {renderTaskAction(task)}
-          </View>
-        ))
+        <View>
+          {SHIFT_ORDER.map(shiftType => {
+            const shiftTasks = groupedTasks[shiftType];
+            if (shiftTasks.length === 0) return null;
+            const info = SHIFT_INFO[shiftType];
+            return (
+              <View key={shiftType} className={styles.shiftGroup}>
+                <View className={styles.shiftHeader}>
+                  <Text className={styles.shiftIcon}>{info.icon}</Text>
+                  <Text className={styles.shiftName}>{shiftType}</Text>
+                  <Text className={styles.shiftDesc}>{info.desc}</Text>
+                  <View className={styles.shiftCount}>
+                    <Text className={styles.shiftCountText}>{shiftTasks.length}项</Text>
+                  </View>
+                </View>
+                {shiftTasks.map((task) => (
+                  <View key={task.id} onClick={() => handleTaskClick(task)}>
+                    <TaskCard task={task} showAction={false} />
+                    {renderTaskAction(task)}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
       )}
     </ScrollView>
   );

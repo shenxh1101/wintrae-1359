@@ -274,6 +274,45 @@
   box-sizing: border-box;
 }
 
+.taskLinkBox {
+  background: linear-gradient(135deg, rgba($color-success, 0.1) 0%, rgba($color-success, 0.05) 100%);
+  border: 2rpx solid rgba($color-success, 0.3);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.taskLinkHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.taskLinkIcon {
+  font-size: 28rpx;
+}
+
+.taskLinkTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-success;
+}
+
+.taskLinkText {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.taskLinkHint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
 
 .photoGrid {
   display: grid;

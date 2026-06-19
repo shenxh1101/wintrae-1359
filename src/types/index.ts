@@ -17,6 +17,41 @@ export type ServiceType =
 // 任务状态
 export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
+// 任务分配方式
+export type TaskAssignType = 'open' | 'assigned';
+
+// 班次类型
+export type ShiftType = '上午' | '下午' | '全天';
+
+// 任务流转操作类型
+export type TaskFlowAction = 
+  | 'created'      // 任务创建
+  | 'published'    // 任务发布
+  | 'assigned'     // 直接指派
+  | 'signup'       // 志愿者报名
+  | 'started'      // 开始任务
+  | 'completed'    // 完成任务
+  | 'cancelled'    // 取消任务
+  | 'exchange'     // 申请换班
+  | 'exchanged'    // 换班成功
+  | 'reopened';    // 重新开放报名
+
+// 任务流转记录接口
+export interface TaskFlowRecord {
+  id: string;
+  taskId: string;
+  action: TaskFlowAction;
+  operatorId?: string;
+  operatorName?: string;
+  operatorRole?: 'admin' | 'volunteer';
+  timestamp: string;
+  remark?: string;
+  previousVolunteerId?: string;
+  previousVolunteerName?: string;
+  newVolunteerId?: string;
+  newVolunteerName?: string;
+}
+
 // 任务接口
 export interface Task {
   id: string;
@@ -32,10 +67,15 @@ export interface Task {
   estimatedDuration: number;
   description: string;
   status: TaskStatus;
+  assignType: TaskAssignType;       // 开放报名 / 直接指派
+  shiftType: ShiftType;             // 班次类型：上午/下午/全天
+  publisherId: string;              // 发布人ID
+  publisherName: string;            // 发布人姓名
   volunteerId?: string;
   volunteerName?: string;
   createdAt: string;
   routeHint?: string;
+  flowRecords: TaskFlowRecord[];    // 完整流转记录
 }
 
 // 志愿者角色

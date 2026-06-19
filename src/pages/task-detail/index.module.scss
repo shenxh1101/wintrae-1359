@@ -209,3 +209,100 @@
 .successBtn {
   background: linear-gradient(135deg, $color-success 0%, #95DE64 100%);
 }
+
+.sectionCount {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.flowTimeline {
+  position: relative;
+  padding-left: 0;
+}
+
+.flowItem {
+  position: relative;
+  display: flex;
+  gap: $spacing-md;
+  padding-bottom: $spacing-lg;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.flowDot {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, $color-primary-bg 0%, rgba($color-primary-light, 0.15) 100%);
+  border-radius: 50%;
+  @include flex-center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  border: 2rpx solid rgba($color-primary, 0.2);
+}
+
+.flowIcon {
+  font-size: 28rpx;
+}
+
+.flowLine {
+  position: absolute;
+  left: 31rpx;
+  top: 64rpx;
+  bottom: 0;
+  width: 2rpx;
+  background: linear-gradient(to bottom, rgba($color-primary, 0.3), rgba($color-primary, 0.05));
+  z-index: 1;
+}
+
+.flowContent {
+  flex: 1;
+  min-width: 0;
+  padding-top: 8rpx;
+}
+
+.flowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-xs;
+  gap: $spacing-sm;
+}
+
+.flowAction {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.flowTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.flowOperator {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 4rpx;
+}
+
+.flowRemark {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+  line-height: $line-height-normal;
+}
+
+.flowVolunteer {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}

@@ -4,8 +4,8 @@ import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import StatusTag from '@/components/StatusTag';
 import { useAppContext } from '@/store/AppContext';
-import { formatDate } from '@/utils';
-import type { Task } from '@/types';
+import { formatDate, getTaskFlowActionText, getTaskFlowActionIcon, generateFlowRecord, formatDateTime } from '@/utils';
+import type { Task, TaskFlowRecord } from '@/types';
 
 const TaskDetailPage: React.FC = () => {
   const router = useRouter();
@@ -16,7 +16,6 @@ const TaskDetailPage: React.FC = () => {
   useDidShow(() => {
     const fresh = tasks.find(t => t.id === taskId);
     setTask(fresh);
-    console.log('[TaskDetail] show, taskId:', taskId);
   });
 
   if (!task) {
@@ -30,6 +29,17 @@ const TaskDetailPage: React.FC = () => {
   }
 
   const isMyTask = task.volunteerId === currentVolunteer.id || task.volunteerName === currentVolunteer.name;
+  const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+
+  const addFlowRecord = (newRecord: TaskFlowRecord) => {
+    const updated = tasks.map(t =>
+      t.id === task.id
+        ? { ...t, flowRecords: [...t.flowRecords, newRecord] }
+        : t
+    );
+    setTasks(updated);
+    setTask(updated.find(t => t.id === task.id));
+  };
 
   const handleSignup = () => {
     Taro.showModal({
@@ -39,9 +49,20 @@ const TaskDetailPage: React.FC = () => {
       confirmColor: '#FF7A45',
       success: (res) => {
         if (res.confirm) {
+          const signupRecord = generateFlowRecord(task.id, 'signup', operator, {
+            remark: '志愿者自主报名',
+            newVolunteerId: currentVolunteer.id,
+            newVolunteerName: currentVolunteer.name,
+          });
           const updated = tasks.map(t =>
             t.id === task.id
-              ? { ...t, status: 'assigned' as const, volunteerId: currentVolunteer.id, volunteerName: currentVolunteer.name }
+              ? { 
+                  ...t, 
+                  status: 'assigned' as const, 
+                  volunteerId: currentVolunteer.id, 
+                  volunteerName: currentVolunteer.name,
+                  flowRecords: [...t.flowRecords, signupRecord]
+                }
               : t
           );
           setTasks(updated);
@@ -60,9 +81,23 @@ const TaskDetailPage: React.FC = () => {
       confirmColor: '#F5222D',
       success: (res) => {
         if (res.confirm) {
+          const cancelRecord = generateFlowRecord(task.id, 'cancelled', operator, {
+            remark: '志愿者取消任务，重新开放报名',
+            previousVolunteerId: task.volunteerId,
+            previousVolunteerName: task.volunteerName,
+          });
+          const reopenRecord = generateFlowRecord(task.id, 'reopened', operator, {
+            remark: '任务重新开放报名',
+          });
           const updated = tasks.map(t =>
             t.id === task.id
-              ? { ...t, status: 'pending' as const, volunteerId: undefined, volunteerName: undefined }
+              ? { 
+                  ...t, 
+                  status: 'pending' as const, 
+                  volunteerId: undefined, 
+                  volunteerName: undefined,
+                  flowRecords: [...t.flowRecords, cancelRecord, reopenRecord]
+                }
               : t
           );
           setTasks(updated);
@@ -78,6 +113,18 @@ const TaskDetailPage: React.FC = () => {
       itemList: ['与其他志愿者换班', '调整到其他时间'],
       success: (res) => {
         if (res.tapIndex === 0) {
+          const exchangeRecord = generateFlowRecord(task.id, 'exchange', operator, {
+            remark: '志愿者申请换班，等待新志愿者接手',
+            previousVolunteerId: task.volunteerId,
+            previousVolunteerName: task.volunteerName,
+          });
+          const updated = tasks.map(t =>
+            t.id === task.id
+              ? { ...t, flowRecords: [...t.flowRecords, exchangeRecord] }
+              : t
+          );
+          setTasks(updated);
+          setTask(updated.find(t => t.id === task.id));
           Taro.showToast({ title: '换班申请已提交', icon: 'success' });
         } else {
           Taro.showToast({ title: '请联系管理员调整', icon: 'none' });
@@ -101,8 +148,17 @@ const TaskDetailPage: React.FC = () => {
   };
 
   const handleStart = () => {
+    const startRecord = generateFlowRecord(task.id, 'started', operator, {
+      remark: '志愿者开始服务',
+    });
     const updated = tasks.map(t =>
-      t.id === task.id ? { ...t, status: 'in_progress' as const } : t
+      t.id === task.id 
+        ? { 
+            ...t, 
+            status: 'in_progress' as const,
+            flowRecords: [...t.flowRecords, startRecord]
+          } 
+        : t
     );
     setTasks(updated);
     setTask(updated.find(t => t.id === task.id));
@@ -110,8 +166,12 @@ const TaskDetailPage: React.FC = () => {
   };
 
   const handleComplete = () => {
-    Taro.navigateTo({ url: '/pages/records/index' });
+    Taro.navigateTo({ url: `/pages/records/index?taskId=${task.id}` });
   };
+
+  const sortedFlowRecords = [...task.flowRecords].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
 
   return (
     <View>
@@ -129,6 +189,13 @@ const TaskDetailPage: React.FC = () => {
             <View className={styles.tagItem}>
               <Text>📍 {task.area}</Text>
             </View>
+            <View className={styles.tagItem}>
+              <Text>🕐 {task.shiftType}</Text>
+            </View>
+          </View>
+          <View className={styles.infoRow}>
+            <Text className={styles.infoLabel}>发布人</Text>
+            <Text className={styles.infoValue}>{task.publisherName}</Text>
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>服务对象</Text>
@@ -140,7 +207,7 @@ const TaskDetailPage: React.FC = () => {
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>服务时间</Text>
-            <Text className={styles.infoValue}>{formatDate(task.scheduledDate)} {task.scheduledTime}</Text>
+            <Text className={styles.infoValue}>{formatDate(task.scheduledDate)} {task.scheduledTime} · {task.shiftType}</Text>
           </View>
           <View className={styles.infoRow}>
             <Text className={styles.infoLabel}>预计时长</Text>
@@ -193,6 +260,49 @@ const TaskDetailPage: React.FC = () => {
             </View>
           </View>
         )}
+
+        <View className={styles.sectionCard}>
+          <View className={styles.sectionTitle}>
+            <Text className={styles.sectionIcon}>📜</Text>
+            <Text className={styles.sectionTitleText}>流转记录</Text>
+            <Text className={styles.sectionCount}>{sortedFlowRecords.length}条</Text>
+          </View>
+          <View className={styles.flowTimeline}>
+            {sortedFlowRecords.map((record, index) => (
+              <View key={record.id} className={styles.flowItem}>
+                <View className={styles.flowDot}>
+                  <Text className={styles.flowIcon}>{getTaskFlowActionIcon(record.action)}</Text>
+                </View>
+                {index < sortedFlowRecords.length - 1 && <View className={styles.flowLine} />}
+                <View className={styles.flowContent}>
+                  <View className={styles.flowHeader}>
+                    <Text className={styles.flowAction}>{getTaskFlowActionText(record.action)}</Text>
+                    <Text className={styles.flowTime}>{formatDateTime(record.timestamp)}</Text>
+                  </View>
+                  {record.operatorName && (
+                    <Text className={styles.flowOperator}>
+                      操作人：{record.operatorName}
+                      {record.operatorRole === 'admin' && '（管理员）'}
+                    </Text>
+                  )}
+                  {record.remark && (
+                    <Text className={styles.flowRemark}>{record.remark}</Text>
+                  )}
+                  {record.newVolunteerName && (
+                    <Text className={styles.flowVolunteer}>
+                      分配给：{record.newVolunteerName}
+                    </Text>
+                  )}
+                  {record.previousVolunteerName && (
+                    <Text className={styles.flowVolunteer}>
+                      原志愿者：{record.previousVolunteerName}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
 
       <View className={styles.bottomBar}>

@@ -1,4 +1,4 @@
-import type { UrgencyLevel, TaskStatus, ServiceType } from '@/types';
+import type { UrgencyLevel, TaskStatus, ServiceType, TaskFlowAction, ShiftType } from '@/types';
 
 export const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -20,6 +20,71 @@ export const formatDateTimeISO = (date: Date): string => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${dateStr} ${hours}:${minutes}`;
 };
+
+export const getShiftTypeFromTime = (timeStr: string): ShiftType => {
+  const hour = parseInt(timeStr.split(':')[0]);
+  if (hour < 12) return '上午';
+  if (hour < 18) return '下午';
+  return '全天';
+};
+
+export const getTaskFlowActionText = (action: TaskFlowAction): string => {
+  const map: Record<TaskFlowAction, string> = {
+    created: '任务创建',
+    published: '任务发布',
+    assigned: '直接指派',
+    signup: '志愿者报名',
+    started: '开始任务',
+    completed: '完成任务',
+    cancelled: '取消任务',
+    exchange: '申请换班',
+    exchanged: '换班成功',
+    reopened: '重新开放报名',
+  };
+  return map[action] || action;
+};
+
+export const getTaskFlowActionIcon = (action: TaskFlowAction): string => {
+  const map: Record<TaskFlowAction, string> = {
+    created: '📝',
+    published: '📢',
+    assigned: '👥',
+    signup: '✅',
+    started: '🚀',
+    completed: '🏆',
+    cancelled: '❌',
+    exchange: '🔄',
+    exchanged: '🔄',
+    reopened: '🔓',
+  };
+  return map[action] || '📋';
+};
+
+export const generateFlowRecord = (
+  taskId: string,
+  action: TaskFlowAction,
+  operator?: { id: string; name: string; role: 'admin' | 'volunteer' },
+  options?: {
+    remark?: string;
+    previousVolunteerId?: string;
+    previousVolunteerName?: string;
+    newVolunteerId?: string;
+    newVolunteerName?: string;
+  }
+) => ({
+  id: generateId(),
+  taskId,
+  action,
+  operatorId: operator?.id,
+  operatorName: operator?.name,
+  operatorRole: operator?.role,
+  timestamp: new Date().toISOString(),
+  remark: options?.remark,
+  previousVolunteerId: options?.previousVolunteerId,
+  previousVolunteerName: options?.previousVolunteerName,
+  newVolunteerId: options?.newVolunteerId,
+  newVolunteerName: options?.newVolunteerName,
+});
 
 export const formatDateTime = (dateStr: string): string => {
   const date = new Date(dateStr);

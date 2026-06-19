@@ -1,4 +1,5 @@
-import type { Task, AreaType, ServiceType, UrgencyLevel, TaskStatus } from '@/types';
+import type { Task, AreaType, ServiceType, UrgencyLevel, TaskStatus, TaskAssignType, ShiftType } from '@/types';
+import { getShiftTypeFromTime, generateFlowRecord, generateId } from '@/utils';
 
 const areas: AreaType[] = ['东区', '西区', '南区', '北区', '中心区'];
 const serviceTypes: ServiceType[] = ['生活照料', '医疗陪护', '代购代办', '心理疏导', '家政清洁', '送餐服务', '便民维修'];
@@ -52,6 +53,8 @@ const routeHints = [
   '北门进入后第一个路口左转'
 ];
 
+const PUBLISHER = { id: 'admin_1', name: '系统管理员', role: 'admin' as const };
+
 const today = new Date();
 
 export const mockTasks: Task[] = Array.from({ length: 15 }, (_, i) => {
@@ -65,8 +68,60 @@ export const mockTasks: Task[] = Array.from({ length: 15 }, (_, i) => {
   const hours = ['08:00', '09:30', '10:00', '14:00', '15:30', '16:00', '09:00', '11:00'];
   const duration = [30, 45, 60, 90, 120];
 
+  const scheduledTime = hours[i % hours.length];
+  const shiftType: ShiftType = getShiftTypeFromTime(scheduledTime);
+  const assignType: TaskAssignType = i % 2 === 0 ? 'open' : 'assigned';
+  
+  const volunteerId = status === 'pending' ? undefined : i % 2 === 0 ? 'vol_1' : 'vol_2';
+  const volunteerName = status === 'pending' ? undefined : i % 2 === 0 ? '李明' : '王芳';
+
+  const taskId = `task_${i + 1}`;
+  const createdAt = new Date(today.getTime() - i * 3600000).toISOString();
+  
+  const flowRecords = [];
+  
+  flowRecords.push(generateFlowRecord(taskId, 'created', PUBLISHER, { remark: '任务信息录入' }));
+  flowRecords.push(generateFlowRecord(taskId, 'published', PUBLISHER, { remark: '任务发布到任务大厅' }));
+
+  if (assignType === 'assigned' && volunteerId && volunteerName) {
+    flowRecords.push(generateFlowRecord(taskId, 'assigned', PUBLISHER, {
+      remark: '管理员直接指派任务',
+      newVolunteerId: volunteerId,
+      newVolunteerName: volunteerName,
+    }));
+  }
+
+  if (status === 'in_progress' && volunteerId && volunteerName) {
+    if (assignType === 'open') {
+      flowRecords.push(generateFlowRecord(taskId, 'signup', { id: volunteerId, name: volunteerName, role: 'volunteer' }, {
+        remark: '志愿者自主报名',
+        newVolunteerId: volunteerId,
+        newVolunteerName: volunteerName,
+      }));
+    }
+    flowRecords.push(generateFlowRecord(taskId, 'started', { id: volunteerId, name: volunteerName, role: 'volunteer' }, {
+      remark: '志愿者开始服务',
+    }));
+  }
+
+  if (status === 'completed' && volunteerId && volunteerName) {
+    if (assignType === 'open') {
+      flowRecords.push(generateFlowRecord(taskId, 'signup', { id: volunteerId, name: volunteerName, role: 'volunteer' }, {
+        remark: '志愿者自主报名',
+        newVolunteerId: volunteerId,
+        newVolunteerName: volunteerName,
+      }));
+    }
+    flowRecords.push(generateFlowRecord(taskId, 'started', { id: volunteerId, name: volunteerName, role: 'volunteer' }, {
+      remark: '志愿者开始服务',
+    }));
+    flowRecords.push(generateFlowRecord(taskId, 'completed', { id: volunteerId, name: volunteerName, role: 'volunteer' }, {
+      remark: '服务完成，已提交探访记录',
+    }));
+  }
+
   return {
-    id: `task_${i + 1}`,
+    id: taskId,
     title: titles[i % titles.length],
     residentName: resident.name,
     residentPhone: resident.phone,
@@ -75,13 +130,18 @@ export const mockTasks: Task[] = Array.from({ length: 15 }, (_, i) => {
     serviceType: serviceTypes[i % serviceTypes.length],
     urgency: urgencies[i % urgencies.length],
     scheduledDate: taskDate.toISOString().split('T')[0],
-    scheduledTime: hours[i % hours.length],
+    scheduledTime,
     estimatedDuration: duration[i % duration.length],
     description: descriptions[i % descriptions.length],
     status,
-    volunteerId: status === 'pending' ? undefined : i % 2 === 0 ? 'vol_1' : 'vol_2',
-    volunteerName: status === 'pending' ? undefined : i % 2 === 0 ? '李明' : '王芳',
-    createdAt: new Date(today.getTime() - i * 3600000).toISOString(),
-    routeHint: routeHints[i % routeHints.length]
+    assignType,
+    shiftType,
+    publisherId: PUBLISHER.id,
+    publisherName: PUBLISHER.name,
+    volunteerId,
+    volunteerName,
+    createdAt,
+    routeHint: routeHints[i % routeHints.length],
+    flowRecords,
   };
 });

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, Input, Textarea } from '@tarojs/components';
+import { View, Text, Input, Textarea, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppContext } from '@/store/AppContext';
-import { generateId, formatDateISO } from '@/utils';
-import type { AreaType, ServiceType, UrgencyLevel, Task } from '@/types';
+import { generateId, formatDateISO, getShiftTypeFromTime, generateFlowRecord } from '@/utils';
+import type { AreaType, ServiceType, UrgencyLevel, Task, TaskAssignType, Volunteer } from '@/types';
 
 const AREAS: AreaType[] = ['东区', '西区', '南区', '北区', '中心区'];
 const SERVICE_TYPES: ServiceType[] = ['生活照料', '医疗陪护', '代购代办', '心理疏导', '家政清洁', '送餐服务', '便民维修'];
@@ -15,8 +15,13 @@ const URGENCY_OPTIONS: { value: UrgencyLevel; label: string; className: string }
   { value: 'low', label: '一般', className: styles.urgencyLow },
 ];
 
+const ASSIGN_OPTIONS: { value: TaskAssignType; label: string; desc: string }[] = [
+  { value: 'open', label: '开放报名', desc: '发布到任务大厅，志愿者自主报名' },
+  { value: 'assigned', label: '直接指派', desc: '指定志愿者，立即加入其排班' },
+];
+
 const TaskPublishPage: React.FC = () => {
-  const { tasks, setTasks } = useAppContext();
+  const { tasks, setTasks, currentVolunteer } = useAppContext();
 
   const [title, setTitle] = useState('');
   const [residentName, setResidentName] = useState('');
@@ -30,9 +35,29 @@ const TaskPublishPage: React.FC = () => {
   const [estimatedDuration, setEstimatedDuration] = useState('60');
   const [description, setDescription] = useState('');
   const [routeHint, setRouteHint] = useState('');
+  const [assignType, setAssignType] = useState<TaskAssignType>('open');
+  const [assignedVolunteerId, setAssignedVolunteerId] = useState<string>('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastPublishedTaskId, setLastPublishedTaskId] = useState<string>('');
+
+  const volunteers: Volunteer[] = (useAppContext() as any).pendingVolunteers?.length > 0 
+    ? [] 
+    : [
+        { id: 'vol_1', name: '李明', role: 'volunteer', status: 'approved' as const, area: '东区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
+        { id: 'vol_2', name: '王芳', role: 'volunteer', status: 'approved' as const, area: '西区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
+        { id: 'vol_3', name: '张伟', role: 'volunteer', status: 'approved' as const, area: '南区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
+      ];
+
+  const volunteerNames = volunteers.map(v => v.name);
+  const selectedVolunteerIndex = volunteers.findIndex(v => v.id === assignedVolunteerId);
 
   const handleDateChange = (e: any) => setScheduledDate(e.detail.value);
   const handleTimeChange = (e: any) => setScheduledTime(e.detail.value);
+
+  const handleVolunteerChange = (e: any) => {
+    const idx = parseInt(e.detail.value);
+    setAssignedVolunteerId(volunteers[idx]?.id || '');
+  };
 
   const validateForm = (): boolean => {
     if (!title.trim()) {
@@ -55,14 +80,57 @@ const TaskPublishPage: React.FC = () => {
       Taro.showToast({ title: '请输入任务描述', icon: 'none' });
       return false;
     }
+    if (assignType === 'assigned' && !assignedVolunteerId) {
+      Taro.showToast({ title: '请选择指派的志愿者', icon: 'none' });
+      return false;
+    }
     return true;
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setResidentName('');
+    setResidentPhone('');
+    setAddress('');
+    setArea('东区');
+    setServiceType('生活照料');
+    setUrgency('medium');
+    setScheduledDate(formatDateISO(new Date()));
+    setScheduledTime('09:00');
+    setEstimatedDuration('60');
+    setDescription('');
+    setRouteHint('');
+    setAssignType('open');
+    setAssignedVolunteerId('');
   };
 
   const handleSubmit = () => {
     if (!validateForm()) return;
 
+    const taskId = generateId();
+    const shiftType = getShiftTypeFromTime(scheduledTime);
+    const assignedVolunteer = volunteers.find(v => v.id === assignedVolunteerId);
+
+    const publisher = { 
+      id: currentVolunteer.id, 
+      name: currentVolunteer.name, 
+      role: currentVolunteer.role as 'admin' | 'volunteer'
+    };
+
+    const flowRecords = [];
+    flowRecords.push(generateFlowRecord(taskId, 'created', publisher, { remark: '任务信息录入' }));
+    flowRecords.push(generateFlowRecord(taskId, 'published', publisher, { remark: '任务发布' }));
+
+    if (assignType === 'assigned' && assignedVolunteer) {
+      flowRecords.push(generateFlowRecord(taskId, 'assigned', publisher, {
+        remark: '管理员直接指派任务',
+        newVolunteerId: assignedVolunteer.id,
+        newVolunteerName: assignedVolunteer.name,
+      }));
+    }
+
     const newTask: Task = {
-      id: generateId(),
+      id: taskId,
       title: title.trim(),
       residentName: residentName.trim(),
       residentPhone: residentPhone.trim(),
@@ -74,22 +142,32 @@ const TaskPublishPage: React.FC = () => {
       scheduledTime,
       estimatedDuration: parseInt(estimatedDuration) || 60,
       description: description.trim(),
-      status: 'pending',
+      status: assignType === 'assigned' ? 'assigned' : 'pending',
+      assignType,
+      shiftType,
+      publisherId: publisher.id,
+      publisherName: publisher.name,
+      volunteerId: assignedVolunteer?.id,
+      volunteerName: assignedVolunteer?.name,
       createdAt: new Date().toISOString(),
       routeHint: routeHint.trim() || undefined,
+      flowRecords,
     };
 
     setTasks([newTask, ...tasks]);
+    setLastPublishedTaskId(taskId);
+    setShowSuccessModal(true);
+  };
 
-    Taro.showModal({
-      title: '发布成功',
-      content: '任务已成功发布到任务大厅',
-      showCancel: false,
-      confirmColor: '#FF7A45',
-      success: () => {
-        Taro.navigateBack();
-      },
-    });
+  const handleViewTask = () => {
+    setShowSuccessModal(false);
+    Taro.redirectTo({ url: `/pages/task-detail/index?id=${lastPublishedTaskId}` });
+  };
+
+  const handleContinuePublish = () => {
+    setShowSuccessModal(false);
+    resetForm();
+    Taro.pageScrollTo({ scrollTop: 0, duration: 300 });
   };
 
   const handleCancel = () => {
@@ -112,6 +190,53 @@ const TaskPublishPage: React.FC = () => {
           <Text className={styles.sectionIcon}>📋</Text>
           <Text className={styles.sectionTitleText}>基本信息</Text>
         </View>
+
+        <View className={styles.formItem}>
+          <Text className={styles.formLabel}>
+            <Text className={styles.requiredMark}>*</Text>分配方式
+          </Text>
+          <View className={styles.assignGroup}>
+            {ASSIGN_OPTIONS.map((opt) => (
+              <View
+                key={opt.value}
+                className={classnames(
+                  styles.assignItem,
+                  assignType === opt.value && styles.assignItemActive
+                )}
+                onClick={() => setAssignType(opt.value)}
+              >
+                <View className={styles.assignItemHeader}>
+                  <Text className={styles.assignItemIcon}>
+                    {opt.value === 'open' ? '📢' : '👥'}
+                  </Text>
+                  <Text className={styles.assignItemLabel}>{opt.label}</Text>
+                </View>
+                <Text className={styles.assignItemDesc}>{opt.desc}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {assignType === 'assigned' && (
+          <View className={styles.formItem}>
+            <Text className={styles.formLabel}>
+              <Text className={styles.requiredMark}>*</Text>指派志愿者
+            </Text>
+            <Picker
+              mode="selector"
+              range={volunteerNames}
+              value={selectedVolunteerIndex >= 0 ? selectedVolunteerIndex : 0}
+              onChange={handleVolunteerChange}
+            >
+              <View className={styles.formInput}>
+                {assignedVolunteerId 
+                  ? volunteers.find(v => v.id === assignedVolunteerId)?.name || '请选择志愿者'
+                  : '请选择指派的志愿者'
+                }
+              </View>
+            </Picker>
+          </View>
+        )}
 
         <View className={styles.formItem}>
           <Text className={styles.formLabel}>
@@ -243,22 +368,31 @@ const TaskPublishPage: React.FC = () => {
             <Text className={styles.formLabel}>
               <Text className={styles.requiredMark}>*</Text>服务日期
             </Text>
-            <picker mode="date" value={scheduledDate} onChange={handleDateChange}>
+            <Picker mode="date" value={scheduledDate} onChange={handleDateChange}>
               <View className={styles.formInput} style={{ lineHeight: '80rpx' }}>
                 {scheduledDate}
               </View>
-            </picker>
+            </Picker>
           </View>
 
           <View className={classnames(styles.formItem, styles.timeItem)}>
             <Text className={styles.formLabel}>
               <Text className={styles.requiredMark}>*</Text>服务时间
             </Text>
-            <picker mode="time" value={scheduledTime} onChange={handleTimeChange}>
+            <Picker mode="time" value={scheduledTime} onChange={handleTimeChange}>
               <View className={styles.formInput} style={{ lineHeight: '80rpx' }}>
                 {scheduledTime}
               </View>
-            </picker>
+            </Picker>
+          </View>
+        </View>
+
+        <View className={styles.formItem}>
+          <Text className={styles.formLabel}>
+            班次类型（自动）
+          </Text>
+          <View className={styles.shiftBadge}>
+            <Text className={styles.shiftBadgeText}>{getShiftTypeFromTime(scheduledTime)}</Text>
           </View>
         </View>
 
@@ -316,6 +450,29 @@ const TaskPublishPage: React.FC = () => {
           发布任务
         </View>
       </View>
+
+      {showSuccessModal && (
+        <View className={styles.modalMask}>
+          <View className={styles.modalContent}>
+            <View className={styles.modalIcon}>✅</View>
+            <Text className={styles.modalTitle}>发布成功</Text>
+            <Text className={styles.modalDesc}>
+              {assignType === 'assigned' 
+                ? '任务已指派给志愿者并加入其排班' 
+                : '任务已发布到任务大厅等待报名'
+              }
+            </Text>
+            <View className={styles.modalButtons}>
+              <View className={styles.modalBtnSecondary} onClick={handleContinuePublish}>
+                继续发布
+              </View>
+              <View className={styles.modalBtnPrimary} onClick={handleViewTask}>
+                查看任务
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

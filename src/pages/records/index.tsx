@@ -1,19 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Input, Textarea, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter } from '@tarojs/taro';
 import styles from './index.module.scss';
 import RecordCard from '@/components/RecordCard';
 import { useAppContext } from '@/store/AppContext';
-import { generateId, formatDateISO, formatDateTimeISO } from '@/utils';
+import { generateId, formatDateISO, formatDateTimeISO, generateFlowRecord } from '@/utils';
 import type { VisitRecord } from '@/types';
 import classnames from 'classnames';
 
 type FilterType = 'all' | 'mine' | 'abnormal';
 
 const RecordsPage: React.FC = () => {
-  const { records, setRecords, currentVolunteer, tasks } = useAppContext();
+  const router = useRouter();
+  const { records, setRecords, currentVolunteer, tasks, setTasks } = useAppContext();
   const [filter, setFilter] = useState<FilterType>('all');
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!router.params.taskId);
+  const [prefilledTaskId, setPrefilledTaskId] = useState(router.params.taskId || '');
 
   const now = new Date();
   const defaultArrivalDate = formatDateISO(now);
@@ -22,19 +24,35 @@ const RecordsPage: React.FC = () => {
   const defaultDepartureDate = formatDateISO(departureDate);
   const defaultDepartureTime = `${String(departureDate.getHours()).padStart(2, '0')}:${String(departureDate.getMinutes()).padStart(2, '0')}`;
 
-  const [formData, setFormData] = useState({
-    residentName: '',
-    address: '',
-    serviceContent: '',
-    abnormalSituation: '',
-    nextSuggestion: '',
-    taskId: '',
-    arrivalDate: defaultArrivalDate,
-    arrivalTime: defaultArrivalTime,
-    departureDate: defaultDepartureDate,
-    departureTime: defaultDepartureTime,
-    serviceDuration: '60'
-  });
+  const getInitialFormData = () => {
+    const base = {
+      residentName: '',
+      address: '',
+      serviceContent: '',
+      abnormalSituation: '',
+      nextSuggestion: '',
+      taskId: '',
+      arrivalDate: defaultArrivalDate,
+      arrivalTime: defaultArrivalTime,
+      departureDate: defaultDepartureDate,
+      departureTime: defaultDepartureTime,
+      serviceDuration: '60'
+    };
+    if (prefilledTaskId) {
+      const task = tasks.find(t => t.id === prefilledTaskId);
+      if (task) {
+        return {
+          ...base,
+          residentName: task.residentName,
+          address: task.address,
+          taskId: task.id,
+        };
+      }
+    }
+    return base;
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
   const [photos, setPhotos] = useState<string[]>([]);
 
   const myRecords = useMemo(() => {
@@ -139,8 +157,27 @@ const RecordsPage: React.FC = () => {
     };
 
     setRecords([newRecord, ...records]);
+
+    if (formData.taskId) {
+      const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+      const completeRecord = generateFlowRecord(formData.taskId, 'completed', operator, {
+        remark: '服务完成，已提交探访记录',
+      });
+      const updatedTasks = tasks.map(t =>
+        t.id === formData.taskId
+          ? {
+              ...t,
+              status: 'completed' as const,
+              flowRecords: [...t.flowRecords, completeRecord],
+            }
+          : t
+      );
+      setTasks(updatedTasks);
+    }
+
     Taro.showToast({ title: '记录提交成功', icon: 'success' });
     setShowForm(false);
+    setPrefilledTaskId('');
     resetForm();
   };
 
@@ -241,7 +278,19 @@ const RecordsPage: React.FC = () => {
               </View>
             </View>
             <ScrollView scrollY className={styles.formBody} enhanced showScrollbar={false}>
-              {inProgressTasks.length > 0 && (
+              {formData.taskId && (
+                <View className={styles.taskLinkBox}>
+                  <View className={styles.taskLinkHeader}>
+                    <Text className={styles.taskLinkIcon}>🔗</Text>
+                    <Text className={styles.taskLinkTitle}>已关联任务</Text>
+                  </View>
+                  <Text className={styles.taskLinkText}>
+                    {tasks.find(t => t.id === formData.taskId)?.title || '未知任务'}
+                  </Text>
+                  <Text className={styles.taskLinkHint}>提交后任务将自动标记为已完成</Text>
+                </View>
+              )}
+              {!formData.taskId && inProgressTasks.length > 0 && (
                 <View className={styles.formGroup}>
                   <View
                     className={styles.addBtn}
