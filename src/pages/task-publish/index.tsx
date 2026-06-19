@@ -5,6 +5,7 @@ import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppContext } from '@/store/AppContext';
 import { generateId, formatDateISO, getShiftTypeFromTime, generateFlowRecord } from '@/utils';
+import { mockAllVolunteers } from '@/data/volunteers';
 import type { AreaType, ServiceType, UrgencyLevel, Task, TaskAssignType, Volunteer } from '@/types';
 
 const AREAS: AreaType[] = ['东区', '西区', '南区', '北区', '中心区'];
@@ -40,15 +41,9 @@ const TaskPublishPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastPublishedTaskId, setLastPublishedTaskId] = useState<string>('');
 
-  const volunteers: Volunteer[] = (useAppContext() as any).pendingVolunteers?.length > 0 
-    ? [] 
-    : [
-        { id: 'vol_1', name: '李明', role: 'volunteer', status: 'approved' as const, area: '东区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
-        { id: 'vol_2', name: '王芳', role: 'volunteer', status: 'approved' as const, area: '西区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
-        { id: 'vol_3', name: '张伟', role: 'volunteer', status: 'approved' as const, area: '南区' as const, skills: [], totalServiceHours: 0, totalTasks: 0, joinDate: '', phone: '', avatar: '' },
-      ];
+  const volunteers: Volunteer[] = mockAllVolunteers.filter(v => v.status === 'approved');
 
-  const volunteerNames = volunteers.map(v => v.name);
+  const volunteerNames = volunteers.map(v => `${v.name} · ${v.area}`);
   const selectedVolunteerIndex = volunteers.findIndex(v => v.id === assignedVolunteerId);
 
   const handleDateChange = (e: any) => setScheduledDate(e.detail.value);

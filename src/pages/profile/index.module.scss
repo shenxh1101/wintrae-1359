@@ -17,7 +17,34 @@
   display: flex;
   align-items: center;
   gap: $spacing-lg;
-  margin-bottom: $spacing-xl;
+  margin-bottom: $spacing-md;
+}
+
+.switchBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 16rpx 28rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-pill;
+  border: 2rpx solid rgba(255, 255, 255, 0.35);
+  align-self: flex-start;
+  transition: all $transition-base;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0.97);
+  }
+}
+
+.switchIcon {
+  font-size: 28rpx;
+}
+
+.switchText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
 }
 
 .avatarWrap {

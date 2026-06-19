@@ -3,15 +3,30 @@ import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useAppContext } from '@/store/AppContext';
+import { mockAllVolunteers } from '@/data/volunteers';
 
 const ProfilePage: React.FC = () => {
-  const { currentVolunteer, tasks, records, pendingVolunteers } = useAppContext();
+  const { currentVolunteer, setCurrentVolunteer, tasks, records, pendingVolunteers } = useAppContext();
 
   const completedCount = tasks.filter(
     t => (t.volunteerId === currentVolunteer.id) && t.status === 'completed'
   ).length;
 
   const abnormalCount = records.filter(r => r.abnormalSituation && r.abnormalSituation.length > 0 && !r.abnormalHandled).length;
+
+  const handleSwitchVolunteer = () => {
+    const otherVolunteers = mockAllVolunteers.filter(v => v.id !== currentVolunteer.id);
+    Taro.showActionSheet({
+      itemList: otherVolunteers.map(v => `${v.name} · ${v.role === 'admin' ? '管理员' : '志愿者'} · ${v.area}`),
+      success: (res) => {
+        const selected = otherVolunteers[res.tapIndex];
+        if (selected) {
+          setCurrentVolunteer(selected);
+          Taro.showToast({ title: `已切换到「${selected.name}」`, icon: 'success' });
+        }
+      }
+    });
+  };
 
   const menus = [
     {
@@ -102,6 +117,10 @@ const ProfilePage: React.FC = () => {
             <Text className={styles.phoneText}>{currentVolunteer.phone}</Text>
             <Text className={styles.areaText}>📍 服务区域：{currentVolunteer.area}</Text>
           </View>
+        </View>
+        <View className={styles.switchBtn} onClick={handleSwitchVolunteer}>
+          <Text className={styles.switchIcon}>🔄</Text>
+          <Text className={styles.switchText}>切换身份</Text>
         </View>
       </View>
 

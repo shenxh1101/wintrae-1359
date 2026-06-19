@@ -306,3 +306,110 @@
   color: $color-primary;
   font-weight: $font-weight-medium;
 }
+
+.addNoteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 20rpx;
+  background: rgba($color-primary, 0.1);
+  border-radius: $radius-pill;
+  margin-left: $spacing-md;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.addNoteIcon {
+  font-size: $font-size-md;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+}
+
+.addNoteText {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.noteInputBox {
+  background: linear-gradient(135deg, rgba($color-warn, 0.12) 0%, rgba($color-warn, 0.05) 100%);
+  border: 2rpx solid rgba($color-warn, 0.3);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.noteTextarea {
+  width: 100%;
+  min-height: 140rpx;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-card;
+  border: 1rpx solid $color-border-light;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  margin-bottom: $spacing-md;
+}
+
+.noteInputActions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+}
+
+.noteCancelBtn {
+  padding: 16rpx 32rpx;
+  background: $color-bg-page;
+  border-radius: $radius-button;
+  border: 2rpx solid $color-border-light;
+}
+
+.noteCancelText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.noteSubmitBtn {
+  padding: 16rpx 32rpx;
+  background: linear-gradient(135deg, $color-warn 0%, #FFC53D 100%);
+  border-radius: $radius-button;
+}
+
+.noteSubmitText {
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.flowItemNote .flowDotNote {
+  background: linear-gradient(135deg, rgba($color-warn, 0.18) 0%, rgba($color-warn, 0.08) 100%);
+  border-color: rgba($color-warn, 0.35);
+}
+
+.flowItemNote .flowLineNote {
+  background: linear-gradient(to bottom, rgba($color-warn, 0.35), rgba($color-warn, 0.08));
+}
+
+.flowActionNote {
+  color: $color-warn !important;
+}
+
+.flowNoteRemark {
+  display: block;
+  font-size: $font-size-sm !important;
+  color: $color-warn;
+  background: rgba($color-warn, 0.08);
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  margin-top: 8rpx;
+  line-height: $line-height-normal !important;
+  font-weight: $font-weight-medium !important;
+}

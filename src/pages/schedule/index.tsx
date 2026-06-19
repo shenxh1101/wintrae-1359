@@ -6,7 +6,8 @@ import ScheduleCalendar from '@/components/ScheduleCalendar';
 import TaskCard from '@/components/TaskCard';
 import { useAppContext } from '@/store/AppContext';
 import { formatDate, generateFlowRecord } from '@/utils';
-import type { Task, ShiftType } from '@/types';
+import type { Task, ShiftType, TaskStatus } from '@/types';
+import classnames from 'classnames';
 
 const SHIFT_ORDER: ShiftType[] = ['上午', '下午', '全天'];
 
@@ -16,6 +17,16 @@ const SHIFT_INFO: Record<ShiftType, { icon: string; desc: string }> = {
   '全天': { icon: '🌞', desc: '18:00以后或跨时段' },
 };
 
+type StatusFilter = 'all' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+
+const STATUS_FILTERS: { value: StatusFilter; label: string; icon: string }[] = [
+  { value: 'all', label: '全部', icon: '📋' },
+  { value: 'assigned', label: '待执行', icon: '⏰' },
+  { value: 'in_progress', label: '进行中', icon: '🚀' },
+  { value: 'completed', label: '已完成', icon: '✅' },
+  { value: 'cancelled', label: '已取消', icon: '❌' },
+];
+
 const SchedulePage: React.FC = () => {
   const { tasks, setTasks, currentVolunteer } = useAppContext();
 
@@ -24,6 +35,7 @@ const SchedulePage: React.FC = () => {
   const [month, setMonth] = useState(now.getMonth());
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [refreshKey, setRefreshKey] = useState(0);
 
   useDidShow(() => {
@@ -35,14 +47,19 @@ const SchedulePage: React.FC = () => {
   }, [tasks, currentVolunteer, refreshKey]);
 
   const markedDates = useMemo(() => {
-    return myTasks.map((t) => t.scheduledDate);
-  }, [myTasks]);
+    if (statusFilter === 'all') {
+      return myTasks.map((t) => t.scheduledDate);
+    }
+    return myTasks.filter(t => t.status === statusFilter).map((t) => t.scheduledDate);
+  }, [myTasks, statusFilter]);
 
   const selectedTasks = useMemo(() => {
-    return myTasks
-      .filter((t) => t.scheduledDate === selectedDate)
-      .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
-  }, [myTasks, selectedDate]);
+    let filtered = myTasks.filter((t) => t.scheduledDate === selectedDate);
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(t => t.status === statusFilter);
+    }
+    return filtered.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  }, [myTasks, selectedDate, statusFilter]);
 
   const groupedTasks = useMemo(() => {
     const groups: Record<ShiftType, Task[]> = {
@@ -61,9 +78,10 @@ const SchedulePage: React.FC = () => {
     const monthTasks = myTasks.filter((t) => t.scheduledDate.startsWith(monthPrefix));
     const total = monthTasks.length;
     const completed = monthTasks.filter((t) => t.status === 'completed').length;
-    const pending = monthTasks.filter((t) => t.status === 'assigned' || t.status === 'in_progress').length;
+    const assigned = monthTasks.filter((t) => t.status === 'assigned').length;
+    const inProgress = monthTasks.filter((t) => t.status === 'in_progress').length;
     const totalHours = monthTasks.reduce((sum, t) => sum + (t.status === 'completed' ? t.estimatedDuration : 0), 0);
-    return { total, completed, pending, totalHours: Math.round(totalHours / 60) };
+    return { total, completed, assigned, inProgress, totalHours: Math.round(totalHours / 60) };
   }, [myTasks, year, month]);
 
   const handlePrevMonth = () => {
@@ -225,16 +243,16 @@ const SchedulePage: React.FC = () => {
           <Text className={styles.summaryLabel}>本月排班</Text>
         </View>
         <View className={styles.summaryItem}>
-          <Text className={styles.summaryValue}>{summary.pending}</Text>
+          <Text className={styles.summaryValue}>{summary.assigned}</Text>
           <Text className={styles.summaryLabel}>待执行</Text>
+        </View>
+        <View className={styles.summaryItem}>
+          <Text className={styles.summaryValue}>{summary.inProgress}</Text>
+          <Text className={styles.summaryLabel}>进行中</Text>
         </View>
         <View className={styles.summaryItem}>
           <Text className={styles.summaryValue}>{summary.completed}</Text>
           <Text className={styles.summaryLabel}>已完成</Text>
-        </View>
-        <View className={styles.summaryItem}>
-          <Text className={styles.summaryValue}>{summary.totalHours}</Text>
-          <Text className={styles.summaryLabel}>服务小时</Text>
         </View>
       </View>
 
@@ -245,6 +263,24 @@ const SchedulePage: React.FC = () => {
         markedDates={markedDates}
         onSelectDate={setSelectedDate}
       />
+
+      <View className={styles.statusFilterBar}>
+        <ScrollView scrollX enhanced showScrollbar={false} className={styles.filterScroll}>
+          {STATUS_FILTERS.map(filter => (
+            <View
+              key={filter.value}
+              className={classnames(
+                styles.statusFilterItem,
+                statusFilter === filter.value && styles.statusFilterItemActive
+              )}
+              onClick={() => setStatusFilter(filter.value)}
+            >
+              <Text className={styles.filterIcon}>{filter.icon}</Text>
+              <Text className={styles.filterLabel}>{filter.label}</Text>
+            </View>
+          ))}
+        </ScrollView>
+      </View>
 
       <View className={styles.listHeader}>
         <View className={styles.listTitle}>

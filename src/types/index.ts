@@ -34,7 +34,8 @@ export type TaskFlowAction =
   | 'cancelled'    // 取消任务
   | 'exchange'     // 申请换班
   | 'exchanged'    // 换班成功
-  | 'reopened';    // 重新开放报名
+  | 'reopened'     // 重新开放报名
+  | 'note';        // 管理员备注
 
 // 任务流转记录接口
 export interface TaskFlowRecord {

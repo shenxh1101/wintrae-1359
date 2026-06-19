@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image } from '@tarojs/components';
+import { View, Text, Image, Textarea } from '@tarojs/components';
 import Taro, { useRouter, useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import StatusTag from '@/components/StatusTag';
@@ -12,6 +12,8 @@ const TaskDetailPage: React.FC = () => {
   const taskId = router.params.id;
   const { tasks, setTasks, currentVolunteer } = useAppContext();
   const [task, setTask] = useState<Task | undefined>(tasks.find(t => t.id === taskId));
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
   useDidShow(() => {
     const fresh = tasks.find(t => t.id === taskId);
@@ -173,6 +175,27 @@ const TaskDetailPage: React.FC = () => {
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 
+  const handleAddNote = () => {
+    if (!noteText.trim()) {
+      Taro.showToast({ title: '请输入备注内容', icon: 'none' });
+      return;
+    }
+    const operator = { id: currentVolunteer.id, name: currentVolunteer.name, role: currentVolunteer.role as 'admin' | 'volunteer' };
+    const noteRecord = generateFlowRecord(task.id, 'note', operator, {
+      remark: noteText.trim(),
+    });
+    const updated = tasks.map(t =>
+      t.id === task.id
+        ? { ...t, flowRecords: [...t.flowRecords, noteRecord] }
+        : t
+    );
+    setTasks(updated);
+    setTask(updated.find(t => t.id === task.id));
+    setNoteText('');
+    setShowNoteInput(false);
+    Taro.showToast({ title: '备注已添加', icon: 'success' });
+  };
+
   return (
     <View>
       <View className={styles.pageContainer}>
@@ -266,17 +289,45 @@ const TaskDetailPage: React.FC = () => {
             <Text className={styles.sectionIcon}>📜</Text>
             <Text className={styles.sectionTitleText}>流转记录</Text>
             <Text className={styles.sectionCount}>{sortedFlowRecords.length}条</Text>
+            {currentVolunteer.role === 'admin' && !showNoteInput && (
+              <View className={styles.addNoteBtn} onClick={() => setShowNoteInput(true)}>
+                <Text className={styles.addNoteIcon}>＋</Text>
+                <Text className={styles.addNoteText}>追加备注</Text>
+              </View>
+            )}
           </View>
+          {currentVolunteer.role === 'admin' && showNoteInput && (
+            <View className={styles.noteInputBox}>
+              <Textarea
+                className={styles.noteTextarea}
+                placeholder="请输入备注内容，如：电话确认、临时调整时间、上门前提醒等"
+                value={noteText}
+                onInput={(e) => setNoteText(e.detail.value)}
+                maxlength={200}
+                autoHeight
+              />
+              <View className={styles.noteInputActions}>
+                <View className={styles.noteCancelBtn} onClick={() => { setShowNoteInput(false); setNoteText(''); }}>
+                  <Text className={styles.noteCancelText}>取消</Text>
+                </View>
+                <View className={styles.noteSubmitBtn} onClick={handleAddNote}>
+                  <Text className={styles.noteSubmitText}>提交备注</Text>
+                </View>
+              </View>
+            </View>
+          )}
           <View className={styles.flowTimeline}>
             {sortedFlowRecords.map((record, index) => (
-              <View key={record.id} className={styles.flowItem}>
-                <View className={styles.flowDot}>
+              <View key={record.id} className={`${styles.flowItem} ${record.action === 'note' ? styles.flowItemNote : ''}`}>
+                <View className={`${styles.flowDot} ${record.action === 'note' ? styles.flowDotNote : ''}`}>
                   <Text className={styles.flowIcon}>{getTaskFlowActionIcon(record.action)}</Text>
                 </View>
-                {index < sortedFlowRecords.length - 1 && <View className={styles.flowLine} />}
+                {index < sortedFlowRecords.length - 1 && <View className={`${styles.flowLine} ${record.action === 'note' ? styles.flowLineNote : ''}`} />}
                 <View className={styles.flowContent}>
                   <View className={styles.flowHeader}>
-                    <Text className={styles.flowAction}>{getTaskFlowActionText(record.action)}</Text>
+                    <Text className={`${styles.flowAction} ${record.action === 'note' ? styles.flowActionNote : ''}`}>
+                      {getTaskFlowActionText(record.action)}
+                    </Text>
                     <Text className={styles.flowTime}>{formatDateTime(record.timestamp)}</Text>
                   </View>
                   {record.operatorName && (
@@ -286,7 +337,9 @@ const TaskDetailPage: React.FC = () => {
                     </Text>
                   )}
                   {record.remark && (
-                    <Text className={styles.flowRemark}>{record.remark}</Text>
+                    <Text className={record.action === 'note' ? styles.flowNoteRemark : styles.flowRemark}>
+                      {record.remark}
+                    </Text>
                   )}
                   {record.newVolunteerName && (
                     <Text className={styles.flowVolunteer}>
