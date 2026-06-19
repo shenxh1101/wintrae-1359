@@ -1,0 +1,318 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-page;
+}
+
+.pageHeader {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-md;
+  color: $color-text-white;
+}
+
+.headerTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.titleText {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+}
+
+.monthPicker {
+  padding: 8rpx 20rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-xs;
+  font-size: $font-size-sm;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+}
+
+.statValue {
+  display: block;
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.85;
+}
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.cardIcon {
+  font-size: 32rpx;
+}
+
+.cardTitleText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.exportBtn {
+  padding: 10rpx 24rpx;
+  background: rgba($color-primary, 0.1);
+  color: $color-primary;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.chartContainer {
+  position: relative;
+  padding-top: $spacing-lg;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 280rpx;
+  padding: 0 $spacing-sm;
+  border-bottom: 1rpx solid $color-border-light;
+}
+
+.barGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-xs;
+  max-width: 80rpx;
+}
+
+.barWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 4rpx;
+}
+
+.barValue {
+  font-size: 20rpx;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.bar {
+  width: 36rpx;
+  border-radius: $radius-xs $radius-xs 0 0;
+  background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 100%);
+  transition: height $transition-base;
+}
+
+.barHours {
+  background: linear-gradient(180deg, #14C9C9 0%, #86E8E8 100%);
+  width: 36rpx;
+  border-radius: $radius-xs $radius-xs 0 0;
+  transition: height $transition-base;
+}
+
+.barLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-top: $spacing-sm;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-lg;
+  margin-top: $spacing-md;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.legendDot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 4rpx;
+}
+
+.legendTasks {
+  background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.legendHours {
+  background: linear-gradient(180deg, #14C9C9 0%, #86E8E8 100%);
+}
+
+.rankList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.rankItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.rankNum {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: $color-bg-page;
+  @include flex-center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-text-secondary;
+  flex-shrink: 0;
+}
+
+.rankNum1 {
+  background: linear-gradient(135deg, #FFB800 0%, #FF8C00 100%);
+  color: $color-text-white;
+}
+
+.rankNum2 {
+  background: linear-gradient(135deg, #C9CDD4 0%, #86909C 100%);
+  color: $color-text-white;
+}
+
+.rankNum3 {
+  background: linear-gradient(135deg, #E8A868 0%, #B87333 100%);
+  color: $color-text-white;
+}
+
+.rankInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rankName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.rankBar {
+  height: 12rpx;
+  background: $color-bg-page;
+  border-radius: $radius-round;
+  overflow: hidden;
+  position: relative;
+}
+
+.rankFill {
+  height: 100%;
+  border-radius: $radius-round;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+  transition: width $transition-base;
+}
+
+.rankValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  flex-shrink: 0;
+  min-width: 100rpx;
+  text-align: right;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-border-light;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.statRowLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.typeIcon {
+  font-size: 28rpx;
+}
+
+.statRowValue {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.countText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+.progressMini {
+  width: 160rpx;
+  height: 8rpx;
+  background: $color-bg-page;
+  border-radius: $radius-round;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-round;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+}

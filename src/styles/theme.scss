@@ -1,0 +1,41 @@
+// ============================================
+// 主题配色变量 - 社区志愿者服务小程序（暖橙风格）
+// ============================================
+
+// 品牌主题色：暖橙系，传递温暖、关怀、活力
+$color-primary: #FF7A45;
+$color-primary-light: #FFA47C;
+$color-primary-dark: #E55A20;
+$color-primary-bg: rgba(255, 122, 69, 0.08);
+
+// 功能色（语义色）
+$color-success: #52C41A;
+$color-success-bg: rgba(82, 196, 26, 0.1);
+$color-warning: #FAAD14;
+$color-warning-bg: rgba(250, 173, 20, 0.1);
+$color-error: #F5222D;
+$color-error-bg: rgba(245, 34, 45, 0.1);
+$color-info: #1890FF;
+$color-info-bg: rgba(24, 144, 255, 0.1);
+
+// 紧急程度专用色
+$color-urgent-high: #F5222D;
+$color-urgent-medium: #FAAD14;
+$color-urgent-low: #52C41A;
+
+// 背景色
+$color-bg-page: #FFF7F2;
+$color-bg-card: #FFFFFF;
+$color-bg-hover: #FFF0E8;
+$color-bg-input: #F7F8FA;
+
+// 文本色
+$color-text-primary: #1D2129;
+$color-text-secondary: #4E5969;
+$color-text-tertiary: #86909C;
+$color-text-disabled: #C9CDD4;
+$color-text-white: #FFFFFF;
+
+// 边框色
+$color-border: #F0F0F0;
+$color-divider: #F5F5F5;

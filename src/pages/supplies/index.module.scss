@@ -1,0 +1,338 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding;
+  border-bottom-left-radius: 32rpx;
+  border-bottom-right-radius: 32rpx;
+  margin-bottom: $spacing-md;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.titleIcon {
+  font-size: 40rpx;
+}
+
+.titleText {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+}
+
+.recordBtn {
+  padding: 12rpx 24rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.recordBtnText {
+  font-size: $font-size-xs;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
+}
+
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+}
+
+.statItem {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  text-align: center;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-white;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.categoryTabs {
+  display: flex;
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-md;
+  gap: $spacing-sm;
+  overflow-x: auto;
+}
+
+.tabItem {
+  padding: 16rpx 32rpx;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.tabText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.tabActiveText {
+  color: $color-text-white;
+}
+
+.sectionTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm $page-padding;
+  margin-bottom: $spacing-xs;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.titleIconSmall {
+  font-size: 28rpx;
+}
+
+.titleTextSmall {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.supplyList {
+  padding: 0 $page-padding;
+}
+
+.recordList {
+  padding: 0 $page-padding;
+  margin-bottom: $spacing-md;
+}
+
+.recordCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md $spacing-lg;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-card;
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.recordName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.recordTypeTag {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.receiveTag {
+  background: $color-primary-bg;
+  color: $color-primary;
+}
+
+.returnTag {
+  background: $color-success-bg;
+  color: $color-success;
+}
+
+.recordMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recordInfo {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.infoText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.quantity {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.quantityReturn {
+  color: $color-success;
+}
+
+.quantityModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $page-padding;
+}
+
+.quantityModal {
+  width: 100%;
+  max-width: 600rpx;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  overflow: hidden;
+}
+
+.quantityHeader {
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid $color-divider;
+  text-align: center;
+}
+
+.quantityTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.quantityBody {
+  padding: $spacing-xl $spacing-lg;
+}
+
+.supplyNameText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  text-align: center;
+  margin-bottom: $spacing-xl;
+}
+
+.quantityStepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-xl;
+}
+
+.stepBtn {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-round;
+  background: $color-bg-input;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.9);
+    background: $color-bg-hover;
+  }
+}
+
+.stepBtnText {
+  font-size: 44rpx;
+  color: $color-text-primary;
+  font-weight: $font-weight-bold;
+}
+
+.quantityNum {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  min-width: 100rpx;
+  text-align: center;
+}
+
+.unitText {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.quantityFooter {
+  display: flex;
+  padding: $spacing-md $spacing-lg $spacing-xl;
+  gap: $spacing-md;
+}
+
+.footerBtn {
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+.cancelFooterBtn {
+  background: $color-bg-input;
+}
+
+.cancelFooterText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+}
+
+.confirmFooterBtn {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.confirmFooterText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-bold;
+}

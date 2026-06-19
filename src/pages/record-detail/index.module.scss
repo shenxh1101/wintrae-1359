@@ -1,0 +1,185 @@
+@use '@/styles/variables.scss' as *;
+
+.pageContainer {
+  min-height: 100vh;
+  padding: $spacing-md $page-padding;
+}
+
+.residentCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-md;
+  color: $color-text-white;
+}
+
+.residentHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.avatarBox {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarIcon {
+  font-size: 48rpx;
+}
+
+.residentInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.residentName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.residentAddr {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+  @include text-ellipsis;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.timeBox {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.timeLabel {
+  font-size: $font-size-xs;
+  opacity: 0.85;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.timeValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+}
+
+.sectionCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.sectionIcon {
+  font-size: 32rpx;
+}
+
+.sectionTitleText {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.contentText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+}
+
+.photoItem {
+  aspect-ratio: 1;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: $color-bg-input;
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+}
+
+.abnormalCard {
+  background: $color-error-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  border-left: 4rpx solid $color-error;
+}
+
+.suggestCard {
+  background: $color-info-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-lg;
+  border-left: 4rpx solid $color-info;
+}
+
+.labelText {
+  font-size: $font-size-xs;
+  color: $color-error;
+  font-weight: $font-weight-semibold;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.suggestLabel {
+  color: $color-info;
+}
+
+.bodyText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.volunteerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+  margin-top: $spacing-sm;
+}
+
+.volunteerInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.volunteerName {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.durationText {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}

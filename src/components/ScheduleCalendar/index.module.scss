@@ -1,0 +1,86 @@
+@use '@/styles/variables.scss' as *;
+
+.container {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.weekHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: $spacing-sm;
+}
+
+.weekDay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64rpx;
+}
+
+.weekDayText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  font-weight: $font-weight-medium;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+}
+
+.dayCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80rpx;
+  border-radius: $radius-sm;
+  position: relative;
+  transition: all $transition-fast;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.today {
+  background: $color-primary-bg;
+}
+
+.selected {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  box-shadow: 0 4rpx 12rpx rgba(255, 122, 69, 0.3);
+}
+
+.dayText {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.selectedText {
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.markDot {
+  position: absolute;
+  bottom: 10rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: $radius-round;
+  background: $color-primary;
+}
+
+.markDotWhite {
+  position: absolute;
+  bottom: 10rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: $radius-round;
+  background: $color-text-white;
+}
